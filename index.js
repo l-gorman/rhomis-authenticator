@@ -7,16 +7,23 @@ const mongoose = require('mongoose')
 // Import Routes
 const authRoute = require('./routes/auth')
 const privateRoute = require('./routes/privateRoute')
+
+// Getting information from the config files
+let config = require('config'); //we load the db location from the JSON files
+
+console.log('Running "' + config.util.getEnv('NODE_ENV') + '" environment')
+const dbHost = config.get('dbConfig.host')
+const port = config.get('dbConfig.port')
 dotenv.config()
 
 // Connect to DB
-mongoose.connect(process.env.MONGO_URL,
+mongoose.connect(dbHost,
     {
         useUnifiedTopology: true,
         useNewUrlParser: true
     },
     () => {
-        console.log("Connected to DB")
+        console.log("Connected to " + dbHost)
     })
 
 // Middleware
@@ -27,4 +34,4 @@ app.use(express.json())
 app.use('/api/user', authRoute)
 app.use('/api/private', privateRoute)
 
-app.listen(process.env.PORT, () => console.log('Server up and running'))
+app.listen(port, () => console.log('Server up and running on port ' + port))
