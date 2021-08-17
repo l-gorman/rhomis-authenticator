@@ -1,0 +1,30 @@
+{
+  "name": "authenticator",
+  "version": "1.0.0",
+  "description": "* An Oauth2 authentication application. Express skeleton using the [Express Generator](https://expressjs.com/en/starter/generator.html). \r * Oauth 2 implemented by following [tutorial 1](https://blog.cloudboost.io/how-to-make-an-oauth-2-server-with-node-js-a6db02dc2ce7) and [tutorial 2](https://blog.logrocket.com/implementing-oauth-2-0-in-node-js/).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/l-gorman/rhomis-authenticator.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/l-gorman/rhomis-authenticator/issues"
+  },
+  "homepage": "https://github.com/l-gorman/rhomis-authenticator#readme",
+  "dependencies": {
+    "@hapi/joi": "^17.1.1",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.13.7"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
+}
