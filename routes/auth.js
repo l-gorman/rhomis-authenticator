@@ -6,6 +6,10 @@ const jwt = require('jsonwebtoken');
 // Validating the body of the request
 const { registrationValidator, loginValidator } = require("./validators.js")
 
+const cors = require("cors");
+router.use(cors());
+router.options("*", cors());
+
 // Registration route
 router.post('/register', async (req, res) => {
 
