@@ -6,7 +6,7 @@
   "scripts": {
     "start-dev": "cross-env NODE_ENV=dev nodemon ./index.js",
     "start-prod": "cross-env NODE_ENV=production node ./index.js",
-    "starttest": "cross-env NODE_ENV=test nodetest ./test/user.js"
+    "start-test": "cross-env NODE_ENV=test ./node_modules/.bin/mocha ./test/user.js --timeout 5000"
   },
   "repository": {
     "type": "git",

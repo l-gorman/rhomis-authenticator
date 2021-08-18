@@ -35,3 +35,5 @@ app.use('/api/user', authRoute)
 app.use('/api/private', privateRoute)
 
 app.listen(port, () => console.log('Server up and running on port ' + port))
+
+module.exports = app; // This needs to be exported for testing

@@ -4,8 +4,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // Validating the body of the request
-const { registrationValidator, loginValidator } = require("./validators")
+const { registrationValidator, loginValidator } = require("./validators.js")
 
+// Registration route
 router.post('/register', async (req, res) => {
 
     // Validate date before making user
@@ -22,7 +23,7 @@ router.post('/register', async (req, res) => {
 
     // Create a new user
     const user = new User({
-        name: req.body.name,
+        username: req.body.username,
         email: req.body.email,
         password: hashPassword
     });
@@ -30,7 +31,7 @@ router.post('/register', async (req, res) => {
     // Save user and catch error
     try {
         const savedUser = await user.save();
-        res.send({ userID: savedUser._id })
+        res.status(201).send({ userID: savedUser._id })
     } catch (err) {
         res.status(400).send(err)
     }
@@ -54,8 +55,9 @@ router.post('/login', async (req, res) => {
 
     // Create and assign a token
 
-    const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET)
-    res.header('auth-token', token).send(token)
+    const token = jwt.sign({ _id: user._id, username: user.username }, process.env.TOKEN_SECRET)
+    // Sending the JWT as a header but also as the 
+    res.header('Authorization', token).status(200).send(token)
 })
 
 

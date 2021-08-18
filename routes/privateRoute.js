@@ -2,12 +2,11 @@ const router = require('express').Router();
 const auth = require('./verifyToken')
 
 // Adding auth as a middleware
-router.get('/', auth, (req, res) => {
+router.get('/username', auth, (req, res) => {
+
     res.json({
-        posts: {
-            title: 'My first post',
-            data: 'Data you should access if authenticated'
-        }
+        id: req.user._id,
+        username: req.user.username
     })
 }
 )
