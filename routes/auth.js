@@ -64,5 +64,24 @@ router.post('/login', async (req, res) => {
     res.header('Authorization', token).status(200).send(token)
 })
 
+router.delete('/delete', async (req, res) => {
+    // Validate request
+    const { error } = loginValidator(req.body)
+    if (error !== undefined) return res.status(400).send(error.details[0].message)
+
+    // Checking if the user is already existent
+    const user = await User.findOne({ email: req.body.email })
+    if (!user) return res.status(400).send('Email not found')
+
+    // Check if password is correct
+    const validPass = await bcrypt.compare(req.body.password, user.password);
+    if (!validPass) return res.status(400).send('Incorrect password')
+
+    // Delete user
+    const deletedUser = await User.findOneAndDelete({ email: req.body.email })
+
+    res.send(deletedUser)
+})
+
 
 module.exports = router;

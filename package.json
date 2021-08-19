@@ -2,10 +2,10 @@
   "name": "authenticator",
   "version": "1.0.0",
   "description": "* An JWT authentication application. Express skeleton using the [Express Generator](https://expressjs.com/en/starter/generator.html). \r * Oauth 2 implemented by following [tutorial 1](https://blog.cloudboost.io/how-to-make-an-oauth-2-server-with-node-js-a6db02dc2ce7) and [tutorial 2](https://blog.logrocket.com/implementing-oauth-2-0-in-node-js/).",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "start-dev": "cross-env NODE_ENV=dev nodemon ./index.js",
-    "start-prod": "cross-env NODE_ENV=production node ./index.js",
+    "start-dev": "cross-env NODE_ENV=dev nodemon ./app.js",
+    "start-prod": "cross-env NODE_ENV=production node ./app.js",
     "start-test": "cross-env NODE_ENV=test ./node_modules/.bin/mocha ./test/user.js --timeout 5000"
   },
   "repository": {

@@ -26,6 +26,10 @@ mongoose.connect(dbHost,
         console.log("Connected to " + dbHost)
     })
 
+// Ensuring that queries are not limited by size
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 // Middleware
 // Add this to allow us to use post requests with JSON
 app.use(express.json())
