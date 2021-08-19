@@ -3,6 +3,10 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Authentication middleware
+const auth = require('./verifyToken')
+
+
 // Validating the body of the request
 const { registrationValidator, loginValidator } = require("./validators.js")
 
@@ -64,24 +68,26 @@ router.post('/login', async (req, res) => {
     res.header('Authorization', token).status(200).send(token)
 })
 
-router.delete('/delete', async (req, res) => {
+router.delete('/delete', auth, async (req, res) => {
     // Validate request
-    const { error } = loginValidator(req.body)
-    if (error !== undefined) return res.status(400).send(error.details[0].message)
-
-    // Checking if the user is already existent
-    const user = await User.findOne({ email: req.body.email })
-    if (!user) return res.status(400).send('Email not found')
-
-    // Check if password is correct
-    const validPass = await bcrypt.compare(req.body.password, user.password);
-    if (!validPass) return res.status(400).send('Incorrect password')
 
     // Delete user
-    const deletedUser = await User.findOneAndDelete({ email: req.body.email })
+    const deletedUser = await User.findOneAndDelete({ _id: req.user._id })
 
     res.send(deletedUser)
 })
+
+// Adding auth as a middleware
+router.get('/information', auth, (req, res) => {
+
+    res.json({
+        id: req.user._id,
+        username: req.user.username
+    })
+}
+)
+
+
 
 
 module.exports = router;

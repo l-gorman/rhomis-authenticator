@@ -6,7 +6,7 @@ const dotenv = require('dotenv')
 const mongoose = require('mongoose')
 // Import Routes
 const authRoute = require('./routes/auth')
-const privateRoute = require('./routes/privateRoute')
+//const userInformation = require('./routes/userInformation')
 
 // Getting information from the config files
 let config = require('config'); //we load the db location from the JSON files
@@ -36,7 +36,7 @@ app.use(express.json())
 
 // Route Middlewares
 app.use('/api/user', authRoute)
-app.use('/api/private', privateRoute)
+//app.use('/api/user-information', userInformation)
 
 app.listen(port, () => console.log('Server up and running on port ' + port))
 
