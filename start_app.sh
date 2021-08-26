@@ -1,2 +1,2 @@
 #!/bin/bash
-cross-env NODE_ENV=production node ./app.js
+./node_modules/.bin/cross-env NODE_ENV=default node ./app.js
