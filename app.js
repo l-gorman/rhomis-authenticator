@@ -36,6 +36,11 @@ app.use(express.json())
 
 // Route Middlewares
 app.use('/api/user', authRoute)
+
+app.get('/', function (req, res) {
+    res.send("Welcome to RHoMIS Authenticator")
+})
+
 //app.use('/api/user-information', userInformation)
 
 app.listen(port, () => console.log('Server up and running on port ' + port))
