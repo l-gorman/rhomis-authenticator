@@ -6,6 +6,8 @@ const dotenv = require('dotenv')
 const mongoose = require('mongoose')
 // Import Routes
 const authRoute = require('./routes/auth')
+const centralAssignmentRoute = require('./routes/centralAssignments')
+const formRoute = require('./routes/forms')
 //const userInformation = require('./routes/userInformation')
 
 // Getting information from the config files
@@ -36,7 +38,8 @@ app.use(express.json())
 
 // Route Middlewares
 app.use('/api/user', authRoute)
-
+app.use('/api/central/', centralAssignmentRoute)
+app.use('/api/forms/', formRoute)
 app.get('/', function (req, res) {
     res.send("Welcome to RHoMIS Authenticator")
 })

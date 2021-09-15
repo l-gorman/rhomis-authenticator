@@ -10,6 +10,8 @@ const registrationValidator = (data) => {
             min(6).
             required().
             email(),
+        centralID: Joi.number().
+            integer(),
         password: Joi.string().
             min(6).
             required(),
