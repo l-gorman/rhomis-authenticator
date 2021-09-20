@@ -16,7 +16,7 @@ const Form = require('../models/Form');
 const getCentralToken = require('./centralAuth')
 
 // Create Project
-router.post("/project/create", auth, async (req, res) => {
+router.post("/create", auth, async (req, res) => {
     // Authenticate for central server
     const central_token = await getCentralToken()
 
@@ -91,7 +91,7 @@ router.post("/project/create", auth, async (req, res) => {
 })
 
 // Delete Project
-router.delete("/project/delete", auth, async (req, res) => {
+router.delete("/delete", auth, async (req, res) => {
     const central_token = await getCentralToken()
 
     if (!req.body.name) return res.send("Need to include project name to create project")
@@ -130,13 +130,28 @@ router.delete("/project/delete", auth, async (req, res) => {
         })
 
 
-        // Delete forms associated with project
-        const formsToDelete = await Form.deleteMany({ project: req.body.name })
+        // Delete forms associated with a project from the User collection
+        const forms = await Form.find({}, "name -_id")
+        const formsToDelete = forms.map((form) => form.name)
 
-        // Delete relevant forms and projects from the user
+        const modifiedUsers = await User.updateMany(
+            {},
+            {
+                $pull: {
+                    forms: { $in: formsToDelete }
+                }
+            }
+        )
+
+        // Delete projects from the user collection
         const projectDeleteUser = await User.updateMany(
             {},
             { $pull: { projects: req.body.name } })
+
+
+        // Delete forms associated with project from the forms collection
+        const deletedForms = await Form.deleteMany({ project: req.body.name })
+        console.log(deletedForms)
 
         // Delete the project from the database
         const projectToDelete = await Project.deleteOne({ name: req.body.name })
@@ -148,16 +163,8 @@ router.delete("/project/delete", auth, async (req, res) => {
     }
 })
 
-// Create Form
-router.post("/form/create", auth, (req, res) => {
-    const central_token = getCentralToken()
-
-    res.send("")
-})
-
-
-// Delete Form
-router.post("/form/delete", auth, (req, res) => {
+// Assign user
+router.post("/assign", auth, (req, res) => {
     const central_token = getCentralToken()
 
     res.send("")
@@ -165,15 +172,7 @@ router.post("/form/delete", auth, (req, res) => {
 
 
 // Assign user
-router.post("/project/assign", auth, (req, res) => {
-    const central_token = getCentralToken()
-
-    res.send("")
-})
-
-
-// Assign user
-router.post("/project/unassign", auth, (req, res) => {
+router.post("/unassign", auth, (req, res) => {
     const central_token = getCentralToken()
 
     res.send("")

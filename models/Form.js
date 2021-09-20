@@ -4,7 +4,7 @@ const formSchema = new mongoose.Schema({
     name: {
         type: String,
     },
-    projectID: {
+    project: {
         type: String,
     },
     users: {
@@ -14,7 +14,7 @@ const formSchema = new mongoose.Schema({
         type: Object,
     },
     centralID: {
-        type: Number,
+        type: String,
     },
     draft: {
         type: Boolean,
@@ -22,7 +22,6 @@ const formSchema = new mongoose.Schema({
     complete: {
         type: Boolean,
     },
-
     date: {
         type: Date,
         default: Date.now
