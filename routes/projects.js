@@ -8,6 +8,9 @@ const cors = require("cors");
 router.use(cors());
 router.options("*", cors());
 
+let config = require('config'); //we load the db location from the JSON files
+const apiURL = config.get('dataAPI.url')
+
 
 const User = require('../models/User');
 const Project = require('../models/Project');
@@ -41,7 +44,7 @@ router.post("/create", auth, async (req, res) => {
 
     try {
 
-        // Create a project on Central 
+        //Create a project on Central 
         const projectCreationResult = await axios({
             url: 'https://' + process.env.CENTRAL_URL + "/v1/projects",
             method: "post",
@@ -82,7 +85,9 @@ router.post("/create", auth, async (req, res) => {
             { $push: { projects: req.body.name } });
 
 
-        console.log(updated_user)
+
+
+
 
         return res.send("Project Saved")
     } catch (err) {
@@ -92,6 +97,7 @@ router.post("/create", auth, async (req, res) => {
 
 // Delete Project
 router.delete("/delete", auth, async (req, res) => {
+
     const central_token = await getCentralToken()
 
     if (!req.body.name) return res.send("Need to include project name to create project")
@@ -155,6 +161,18 @@ router.delete("/delete", auth, async (req, res) => {
 
         // Delete the project from the database
         const projectToDelete = await Project.deleteOne({ name: req.body.name })
+
+        // Deleting processed data
+        const deletedProcessedData = await axios({
+            url: apiURL + "/api/delete-project",
+            method: "delete",
+            data: {
+                "projectName": req.body.name
+            },
+            headers: {
+                'Authorization': req.header('Authorization')
+            }
+        })
 
         return res.send(projectToDelete)
 

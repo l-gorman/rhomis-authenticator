@@ -2,5 +2,8 @@
     "dbConfig": {
         "host": "mongodb://127.0.0.1:27017/rhomis-auth-test",
         "port": 3002
+    },
+    "dataAPI": {
+        "url": "http://localhost:3001"
     }
 }

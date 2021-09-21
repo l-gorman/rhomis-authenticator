@@ -37,7 +37,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json())
 
 // Route Middlewares
-app.use('/api/user', authRoute)
+app.use('/api/user/', authRoute)
 app.use('/api/projects/', projectsRoute)
 app.use('/api/forms/', formRoute)
 app.get('/', function (req, res) {
