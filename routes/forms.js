@@ -27,8 +27,9 @@ router.post("/new", auth, async (req, res) => {
 
         // Check which project we are looking for
         const previous_projects = await Project.findOne({ name: req.query.project_name })
+        console.log(previous_projects)
         if (!previous_projects) {
-            res.send("Could not the project you are looking for in the RHoMIS db")
+            return res.send("Could not the project you are looking for in the RHoMIS db")
         }
 
         // Check if the authenticated user is actually linked to the project under question
@@ -40,13 +41,13 @@ router.post("/new", auth, async (req, res) => {
         const project_ID = previous_projects.centralID
 
         // Check if form exists
-        const previous_forms = await Form.findOne({ name: req.query.form_name })
+        const previous_forms = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
         if (previous_forms) {
             res.send("There is already a form with this name in the database")
         }
 
 
-        // Authenticate on ODK central
+        // Authenticate on ODK central  
         const token = await getCentralToken()
 
         // Load the xls form data from the request

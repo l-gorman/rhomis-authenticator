@@ -8,6 +8,7 @@ const mongoose = require('mongoose')
 const authRoute = require('./routes/auth')
 const projectsRoute = require('./routes/projects')
 const formRoute = require('./routes/forms')
+const metaDataRoute = require('./routes/metaData')
 //const userInformation = require('./routes/userInformation')
 
 // Getting information from the config files
@@ -29,8 +30,8 @@ mongoose.connect(dbHost,
     })
 
 // Ensuring that queries are not limited by size
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ limit: '200mb', extended: true }));
 
 // Middleware
 // Add this to allow us to use post requests with JSON
@@ -40,6 +41,8 @@ app.use(express.json())
 app.use('/api/user/', authRoute)
 app.use('/api/projects/', projectsRoute)
 app.use('/api/forms/', formRoute)
+app.use('/api/meta-data/', metaDataRoute)
+
 app.get('/', function (req, res) {
     res.send("Welcome to RHoMIS Authenticator")
 })

@@ -20,7 +20,9 @@ const getCentralToken = require('./centralAuth')
 
 // Create Project
 router.post("/create", auth, async (req, res) => {
-    // Authenticate for central server
+    // Authenticate for central server`
+
+
     const central_token = await getCentralToken()
 
     // Make sure there is a "name" argument provided in the request
