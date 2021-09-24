@@ -98,20 +98,20 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     // Validate request
     const { error } = loginValidator(req.body)
-    if (error !== undefined) return res.status(400).send(error.details[0].message)
+    if (error !== undefined) return res.send(error.details[0].message)
 
     // Checking if the user is already existent
     const user = await User.findOne({ email: req.body.email })
-    if (!user) return res.status(400).send('Email not found')
+    if (!user) return res.send('Email not found')
 
     // Check if password is correct
     const validPass = await bcrypt.compare(req.body.password, user.password);
-    if (!validPass) return res.status(400).send('Incorrect password')
+    if (!validPass) return res.send('Incorrect password')
 
     // Create and sign a token
     const token = jwt.sign({ _id: user._id, email: user.email, role: user.role }, process.env.TOKEN_SECRET)
     // Sending the JWT as a header but also as the 
-    res.header('Authorization', token).status(200).send(token)
+    res.header('Authorization', token).send(token)
 })
 
 // Delete user
@@ -119,7 +119,7 @@ router.delete('/delete', auth, async (req, res) => {
     const userToDelete = await User.findOne({ _id: req.user._id })
 
     console.log(req.user._id)
-    if (!userToDelete) return res.status(400).send('User does not exist in local db, cannot delete')
+    if (!userToDelete) return res.send('User does not exist in local db, cannot delete')
 
     // Checking if the user already exists on ODK central
     const central_token = await getCentralToken()
