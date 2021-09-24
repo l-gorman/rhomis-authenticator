@@ -43,8 +43,8 @@ router.post('/register', async (req, res) => {
     console.log(centralResultUsers.config)
 
     const user = centralResultUsers.data.filter(user => user.email === req.body.email)
-    if (user.length > 1) res.status(400).send("multiple users with that email in central database")
-    if (user.length === 1) res.status(400).send("A user with that email already exists in ODK central database")
+    if (user.length > 1) res.send("multiple users with that email in central database")
+    if (user.length === 1) res.send("A user with that email already exists in ODK central database")
 
 
     // Obtaining central access token
