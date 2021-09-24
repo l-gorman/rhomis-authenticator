@@ -16,7 +16,7 @@ router.options("*", cors());
 
 // Registration route
 router.post('/register', async (req, res) => {
-	console.log("receiving request")
+    console.log("receiving request")
     // Validate date before making user
     const { error } = registrationValidator(req.body);
     if (error !== undefined) return res.send(error.details[0].message)
