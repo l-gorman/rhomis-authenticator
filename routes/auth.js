@@ -19,6 +19,7 @@ router.post('/register', async (req, res) => {
 
     // Validate date before making user
     const { error } = registrationValidator(req.body);
+
     if (error !== undefined) return res.status(400).send(error.details[0].message)
 
     // Checking if the user already exists in the database
