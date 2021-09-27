@@ -4,11 +4,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const axios = require('axios')
 // Authentication middleware
-const auth = require('./verifyToken')
+const auth = require('../validation/verifyToken')
 const getCentralToken = require('./centralAuth')
 
 // Validating the body of the request
-const { registrationValidator, loginValidator } = require("./validators.js")
+const { registrationValidator, loginValidator } = require("../validation/validators.js")
 
 const cors = require("cors");
 router.use(cors());
@@ -16,7 +16,9 @@ router.options("*", cors());
 
 // Registration route
 router.post('/register', async (req, res) => {
-    console.log("receiving request")
+    // console.log("receiving request")
+    console.log("email" + req.body.email)
+
     // Validate date before making user
     const { error } = registrationValidator(req.body);
     if (error !== undefined) return res.send(error.details[0].message)
@@ -32,8 +34,7 @@ router.post('/register', async (req, res) => {
         url: 'https://' + process.env.CENTRAL_URL + "/v1/users",
         method: "get",
         data: {
-            email: req.body.email,
-            password: req.body.password
+            email: req.body.email
         },
         headers: {
             'Authorization': 'Bearer ' + central_token

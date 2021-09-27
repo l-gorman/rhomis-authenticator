@@ -1,4 +1,4 @@
-const auth = require("./verifyToken")
+const auth = require("../validation/verifyToken")
 const router = require('express').Router()
 const jwt = require('jsonwebtoken');
 const axios = require('axios')

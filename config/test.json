@@ -4,6 +4,6 @@
         "port": 3002
     },
     "dataAPI": {
-        "url": "http://localhost:3001"
+        "url": "http://localhost:3002"
     }
 }

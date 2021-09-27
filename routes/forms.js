@@ -2,7 +2,7 @@ const router = require('express').Router()
 const fs = require('fs')
 const axios = require('axios')
 
-const auth = require('./verifyToken')
+const auth = require('../validation/verifyToken')
 
 const Project = require('../models/Project')
 const Form = require('../models/Form')
