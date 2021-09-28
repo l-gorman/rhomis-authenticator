@@ -11,7 +11,7 @@ async function getCentralAuthToken() {
                 password: process.env.CENTRAL_PASSWORD
             }
         })
-        console.log(central_token)
+        // console.log(central_token)
         if (central_token.data === undefined) throw "Could not obtain central auth token"
         if (central_token.data.token === undefined) throw "Could not obtain central auth token"
 

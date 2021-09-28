@@ -16,8 +16,7 @@ router.options("*", cors());
 
 // Registration route
 router.post('/register', async (req, res) => {
-    // console.log("receiving request")
-    console.log("email" + req.body.email)
+
 
     // Validate date before making user
     const { error } = registrationValidator(req.body);
@@ -25,11 +24,14 @@ router.post('/register', async (req, res) => {
 
     // Checking if the user already exists in the database
     const emailExist = await User.findOne({ email: req.body.email })
-    console.log(emailExist)
     if (emailExist) return res.send('Email already exists')
 
     // Checking if the user already exists on ODK central
     const central_token = await getCentralToken()
+
+    if (!central_token) return res.status(500).send("Could not log administrator into central")
+    // console.log("central token: " + central_token)
+
     const centralResultUsers = await axios({
         url: 'https://' + process.env.CENTRAL_URL + "/v1/users",
         method: "get",
@@ -41,7 +43,7 @@ router.post('/register', async (req, res) => {
         }
     })
 
-    console.log(centralResultUsers.config)
+    // console.log(centralResultUsers)
 
     const user = centralResultUsers.data.filter(user => user.email === req.body.email)
     if (user.length > 1) res.status(400).send("multiple users with that email in central database")
@@ -50,7 +52,7 @@ router.post('/register', async (req, res) => {
 
     // Obtaining central access token
     try {
-        console.log("Obtaining token")
+        // console.log("Obtaining token")
 
         // Add user to central database using the API
         const centralResult = await axios({
@@ -64,7 +66,9 @@ router.post('/register', async (req, res) => {
                 'Authorization': 'Bearer ' + central_token
             }
         })
-        console.log(centralResult.data.id)
+        // console.log("Adding user")
+
+        // console.log(centralResult.data)
         if (centralResult.data.id === undefined) throw "Unable to save user in ODK Central"
 
         // Save the user in the database
@@ -85,6 +89,7 @@ router.post('/register', async (req, res) => {
 
 
         const savedUser = await user.save();
+
         res.status(201).send({
             userID: savedUser._id
         })
@@ -119,7 +124,6 @@ router.post('/login', async (req, res) => {
 router.delete('/delete', auth, async (req, res) => {
     const userToDelete = await User.findOne({ _id: req.user._id })
 
-    console.log(req.user._id)
     if (!userToDelete) return res.status.apply(400).send('User does not exist in local db, cannot delete')
 
     // Checking if the user already exists on ODK central

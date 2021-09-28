@@ -6,7 +6,8 @@
   "scripts": {
     "start-dev": "cross-env NODE_ENV=dev nodemon ./app.js",
     "start-prod": "cross-env NODE_ENV=prod node ./app.js",
-    "start-test": "cross-env NODE_ENV=test ./node_modules/.bin/mocha --timeout 5000"
+    "start-test": "cross-env NODE_ENV=test ./node_modules/.bin/mocha --timeout 5000",
+    "start-test-debug": "cross-env NODE_ENV=test DEBUG=nock.* ./node_modules/.bin/mocha --timeout 5000"
   },
   "repository": {
     "type": "git",
