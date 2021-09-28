@@ -1,29 +1,24 @@
-
-// No longer need to set the node environment to test as I do this when running the 
-// test scripts anyways
-//process.env.NODE_ENV = 'test';
+// Environment information is set in the package.json
+// To run tests enter command "npm run start-test"
 const axios = require('axios')
+// Set axios information to use standard http 
+// to allow for the nock interceptor
 axios.defaults.adapter = require('axios/lib/adapters/http')
 
+// Load testing libraries
 const nock = require('nock')
-
-let User = require('../models/User')
-
-// Require the dev dependencies
 let chai = require('chai');
 let chaiHttp = require('chai-http');
-let index = require('../app')
 let should = chai.should()
 var assert = require('assert');
-// const mocha = require('mocha')
-// const afterAll = mocha.afterAll()
-// const afterEach = mocha.afterEach()
 
-
+// Loading app information
+let User = require('../models/User')
+let index = require('../app')
 
 chai.use(chaiHttp)
 // Parent Block
-describe('Users', () => {
+describe('User Registration', () => {
     // Specifying something to  be done before each test
     // In this case we are cleaning up the database
     beforeEach(async function () {
@@ -31,15 +26,13 @@ describe('Users', () => {
         });
     });
 
-
-
     afterEach(nock.cleanAll)
     after(function () {
         nock.restore
     })
 
     // The Full test
-    it('should register a user which does not exist andsave in data base', async function () {
+    it('Should register a user which does not exist and save in data base', async function () {
 
         // Test admin email and password
         const admin_email = "admin@xyz.com"
@@ -127,30 +120,51 @@ describe('Users', () => {
 
         const newUser = await User.findOne({ _id: testResult.data.userID })
 
-
-        // console.log("new user")
-
-        // console.log(newUser)
-
-        // {
-        //     _id: 61530298f14bd5230de5742c,
-        //     email: 'user2@xyz.com',
-        //     centralID: 226,
-        //     password: '$2a$10$n4QbqTzxGYn/hFN7DRpfKeavRcwJ5nl51Hzys7ZP6VCiwuG1NXxou',
-        //     role: 'project',
-        //     projects: [],
-        //     forms: [],
-        //     createdAt: 2021-09-28T11:55:04.909Z,
-        //     __v: 0
-        //   }
-
         assert.equal(newUser.email, "user2@xyz.com");
         assert.equal(newUser.centralID, 226);
         assert.equal(newUser.role, "project");
+        should.exist(newUser.projects);
+        should.exist(newUser.forms);
+        should.exist(newUser._id);
+        should.exist(newUser.createdAt);
+        should.exist(newUser.__v);
+    })
 
+    it('Should pick up on missing information in user registration', async function () {
+
+        assert.equal(1, 2 - 1);
 
     })
 
 
+    it('Should deal with error response from ODK central databases and clean-up properly', async function () {
+
+        assert.equal(1, 2 - 1);
+
+    })
+
+})
+
+
+describe("User Login", () => {
+    it("Should login user and produce a token which can be decoded", async function () {
+
+    })
+
+    it("Should correctly deal with Users who are not authenticated", async function () {
+
+    })
+
+})
+
+
+describe("User Deletion", () => {
+    it("Should delete an authenticated user", async function () {
+
+    })
+
+    it("Should correctly deal with Users who are not authenticated", async function () {
+
+    })
 
 })

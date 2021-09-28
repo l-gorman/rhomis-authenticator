@@ -162,24 +162,9 @@ router.delete('/delete', auth, async (req, res) => {
 
     } catch (err) {
         res.send(err)
-
     }
 
 
 })
-
-// Adding auth as a middleware
-router.get('/information', auth, async (req, res) => {
-
-    const user = await User.findOne({ _id: req.user._id })
-    if (!user) return res.send("Could not find a user with the credentials provided")
-    res.json({
-        id: user._id,
-        email: user.email,
-        projects: user.projects,
-        forms: user.forms
-    })
-})
-
 
 module.exports = router;
