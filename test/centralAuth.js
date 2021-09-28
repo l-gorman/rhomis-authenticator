@@ -17,3 +17,9 @@ let User = require('../models/User')
 let index = require('../app')
 
 chai.use(chaiHttp)
+
+describe("Central Authentication", () => {
+    it("Should authenticate in ODK central and return a token", async function () {
+
+    })
+})
