@@ -64,7 +64,8 @@ router.post("/create", auth, async (req, res) => {
         const savedProject = await new Project({
             name: req.body.name,
             centralID: projectCreationResult.data.id,
-            users: [req.user._id]
+            users: [req.user._id],
+            forms: []
         }).save()
 
         //LINK THE USER CREATING THE PROJECT, TO THEIR PROJECT
@@ -102,11 +103,11 @@ router.delete("/delete", auth, async (req, res) => {
 
     const central_token = await getCentralToken()
 
-    if (!req.body.name) return res.send("Need to include project name to create project")
+    if (!req.body.name) return res.status(400).send("Need to include project name to create project")
 
     // Find project in database
     const project = await Project.findOne({ name: req.body.name })
-    if (!project) return res.send("Project does not exist in database")
+    if (!project) return res.status(400).send("Project does not exist in database")
 
     // Check for project in ODK central
 
@@ -120,8 +121,8 @@ router.delete("/delete", auth, async (req, res) => {
 
     const matchedProjects = centralProjects.data.filter(project => project.name == req.body.name)
 
-    if (matchedProjects == 0) return res.send("Project does not exist in ODK central")
-    if (matchedProjects > 1) return res.send("More than one project with this name")
+    if (matchedProjects == 0) return res.status(400).send("Project does not exist in ODK central")
+    if (matchedProjects > 1) return res.status(400).send("More than one project with this name")
 
     const centralID = matchedProjects[0].id
 

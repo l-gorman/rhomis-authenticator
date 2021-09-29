@@ -20,11 +20,11 @@ router.post('/register', async (req, res) => {
 
     // Validate date before making user
     const { error } = registrationValidator(req.body);
-    if (error !== undefined) return res.send(error.details[0].message)
+    if (error !== undefined) return res.status(400).send(error.details[0].message)
 
     // Checking if the user already exists in the database
     const emailExist = await User.findOne({ email: req.body.email })
-    if (emailExist) return res.send('Email already exists')
+    if (emailExist) return res.status(400).send('Email already exists')
 
     // Checking if the user already exists on ODK central
     const central_token = await getCentralToken()
