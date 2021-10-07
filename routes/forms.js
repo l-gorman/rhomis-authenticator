@@ -86,6 +86,7 @@ router.post("/new", auth, async (req, res) => {
         savedForm = await new Form({
             name: req.query.form_name,
             project: req.query.project_name,
+            formVersion: req.body.form_version,
             users: [req.user._id],
             centralID: centralResponse.data.xmlFormId,
             draft: !req.query.publish,

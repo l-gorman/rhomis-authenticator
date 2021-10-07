@@ -16,6 +16,9 @@ const formSchema = new mongoose.Schema({
     centralID: {
         type: String,
     },
+    formVersion: {
+        type: String,
+    },
     draft: {
         type: Boolean,
     },
