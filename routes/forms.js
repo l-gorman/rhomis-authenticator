@@ -8,6 +8,10 @@ const Project = require('../models/Project')
 const Form = require('../models/Form')
 const User = require('../models/User')
 
+let config = require('config'); //we load the db location from the JSON files
+const apiURL = config.get('dataAPI.url')
+
+
 const cors = require("cors");
 router.use(cors());
 router.options("*", cors());
@@ -22,8 +26,14 @@ router.post("/new", auth, async (req, res) => {
     console.log(req.query.project_name)
     console.log(req.query.form_name)
     console.log(req.query.publish)
-
+    console.log(req.query.form_version)
     try {
+        if (req.query.project_name === undefined |
+            req.query.form_name === undefined |
+            req.query.form_version === undefined |
+            req.query.publish === undefined) {
+            return res.status(400).send("Missing information in request")
+        }
 
         // Check which project we are looking for
         const previous_projects = await Project.findOne({ name: req.query.project_name })
@@ -43,7 +53,7 @@ router.post("/new", auth, async (req, res) => {
         // Check if form exists
         const previous_forms = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
         if (previous_forms) {
-            res.send("There is already a form with this name in the database")
+            res.status(400).send("There is already a form with this name in the database")
         }
 
 
@@ -52,6 +62,8 @@ router.post("/new", auth, async (req, res) => {
 
         // Load the xls form data from the request
         const data = await converToBuffer(req, res)
+
+
 
         // Send form to ODK central
         const centralResponse = await axios({
@@ -83,15 +95,26 @@ router.post("/new", auth, async (req, res) => {
         console.log(req.query.project_name)
         console.log(centralResponse.data)
 
-        savedForm = await new Form({
+        const formInformation = {
             name: req.query.form_name,
             project: req.query.project_name,
-            formVersion: req.body.form_version,
+            formVersion: req.query.form_version,
             users: [req.user._id],
             centralID: centralResponse.data.xmlFormId,
             draft: !req.query.publish,
             complete: false,
-        }).save()
+        }
+
+        const formDataApi = await axios({
+            url: apiURL + "/api/meta-data/form",
+            method: "post",
+            data: formInformation,
+            headers: {
+                'Authorization': req.header('Authorization')
+            }
+        })
+
+        savedForm = await new Form(formInformation).save()
 
 
 

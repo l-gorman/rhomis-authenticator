@@ -60,13 +60,29 @@ router.post("/create", auth, async (req, res) => {
         // Check if the request returned a project with the Central ID
         if (projectCreationResult.data.id === undefined) throw ("error in creating central project")
 
-        // Save the new project in the database
-        const savedProject = await new Project({
+        const projectInformation = {
             name: req.body.name,
             centralID: projectCreationResult.data.id,
             users: [req.user._id],
             forms: []
-        }).save()
+        }
+
+
+        const projectCreateDataApi = await axios({
+            url: apiURL + "/api/meta-data/project",
+            method: "post",
+            data: projectInformation,
+            headers: {
+                'Authorization': req.header('Authorization')
+            }
+        })
+
+        // Save the new project in the database
+        const savedProject = await new Project(projectInformation).save()
+
+
+        console.log(projectInformation)
+
 
         //LINK THE USER CREATING THE PROJECT, TO THEIR PROJECT
         // Finding user all user information
