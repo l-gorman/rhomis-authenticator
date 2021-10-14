@@ -3,6 +3,9 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const axios = require('axios')
+
+let config = require('config'); //we load the db location from the JSON files
+
 // Authentication middleware
 const auth = require('../validation/verifyToken')
 const getCentralToken = require('./centralAuth')
@@ -13,6 +16,64 @@ const { registrationValidator, loginValidator } = require("../validation/validat
 const cors = require("cors");
 router.use(cors());
 router.options("*", cors());
+
+
+// Configuring email transporter 
+// sending email
+const nodemailer = require('nodemailer');
+var sgTransport = require('nodemailer-sendgrid-transport');
+
+function getTransporterOptions() {
+    if (config.util.getEnv('NODE_ENV') == "prod") {
+        return sgTransport({
+            auth: {
+                api_key: process.env.SENDGRIDAPI
+            }
+        })
+    }
+
+    if (config.util.getEnv('NODE_ENV') == "dev" | config.util.getEnv('NODE_ENV') == "test") {
+        return {
+            host: 'smtp.ethereal.email',
+            port: 587,
+            auth: {
+                user: process.env.ETHEREALEMAIL,
+                pass: process.env.ETHEREALPASSWORD
+            }
+        }
+    }
+}
+const transporterOptions = getTransporterOptions()
+// config.util.getEnv('NODE_ENV')
+console.log(transporterOptions)
+
+
+
+
+
+const transporter = nodemailer.createTransport(transporterOptions);
+
+
+let mailDetails = {
+    from: 'michelle.renner38@ethereal.email',
+    to: 'leogorman123@gmail.com',
+    subject: 'Test mail',
+    html: '<h1>Test email from rhomis auth test<h1>'
+};
+
+transporter.sendMail(mailDetails, function (err, data) {
+    if (err) {
+        console.log(err);
+    } else {
+        console.log('Email sent successfully');
+    }
+});
+
+
+
+
+
+
 
 // Registration route
 router.post('/register', async (req, res) => {
@@ -119,6 +180,13 @@ router.post('/login', async (req, res) => {
     // Sending the JWT as a header but also as the 
     res.header('Authorization', token).send(token)
 })
+
+
+router.post('/update', auth, async (req, res) => {
+    res.send("reached the update endpoint")
+})
+
+
 
 // Delete user
 router.delete('/delete', auth, async (req, res) => {

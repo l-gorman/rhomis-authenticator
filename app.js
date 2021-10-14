@@ -1,8 +1,8 @@
-
-
 const express = require('express');
 const app = express();
 const dotenv = require('dotenv')
+dotenv.config()
+
 const mongoose = require('mongoose')
 
 // Import Routes
@@ -11,19 +11,19 @@ const projectsRoute = require('./routes/projects')
 const formRoute = require('./routes/forms')
 const metaDataRoute = require('./routes/metaData')
 
+
+
 // Rate limiting
 const rateLimit = require("express-rate-limit");
 
 // Enable if you're behind a reverse proxy (Heroku, Bluemix, AWS ELB, Nginx, etc)
 // see https://expressjs.com/en/guide/behind-proxies.html
-// app.set('trust proxy', 1);
+app.set('trust proxy', 1);
 
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100
 });
-
-
 
 
 // Getting information from the config files
@@ -32,7 +32,6 @@ let config = require('config'); //we load the db location from the JSON files
 console.log('Running "' + config.util.getEnv('NODE_ENV') + '" environment')
 const dbHost = config.get('dbConfig.host')
 const port = config.get('dbConfig.port')
-dotenv.config()
 
 // Connect to DB
 mongoose.connect(dbHost,
@@ -64,7 +63,6 @@ app.use("/api/user", apiLimiter);
 app.get('/', function (req, res) {
     res.send("Welcome to RHoMIS Authenticator")
 })
-
 
 app.listen(port, () => console.log('Server up and running on port ' + port))
 

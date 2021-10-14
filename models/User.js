@@ -24,6 +24,12 @@ const userSchema = new mongoose.Schema({
         min: 6,
         max: 1024,
     },
+    passwordResetKey: {
+        type: Number,
+        required: true,
+        min: 6,
+        max: 1024,
+    },
     createdAt: {
         type: Date,
         default: Date.now
