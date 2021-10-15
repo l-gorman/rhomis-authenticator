@@ -26,7 +26,6 @@ const userSchema = new mongoose.Schema({
     },
     passwordResetKey: {
         type: Number,
-        required: true,
         min: 6,
         max: 1024,
     },

@@ -20,54 +20,54 @@ router.options("*", cors());
 
 // Configuring email transporter 
 // sending email
-const nodemailer = require('nodemailer');
-var sgTransport = require('nodemailer-sendgrid-transport');
+// const nodemailer = require('nodemailer');
+// var sgTransport = require('nodemailer-sendgrid-transport');
 
-function getTransporterOptions() {
-    if (config.util.getEnv('NODE_ENV') == "prod") {
-        return sgTransport({
-            auth: {
-                api_key: process.env.SENDGRIDAPI
-            }
-        })
-    }
+// function getTransporterOptions() {
+//     if (config.util.getEnv('NODE_ENV') == "prod") {
+//         return sgTransport({
+//             auth: {
+//                 api_key: process.env.SENDGRIDAPI
+//             }
+//         })
+//     }
 
-    if (config.util.getEnv('NODE_ENV') == "dev" | config.util.getEnv('NODE_ENV') == "test") {
-        return {
-            host: 'smtp.ethereal.email',
-            port: 587,
-            auth: {
-                user: process.env.ETHEREALEMAIL,
-                pass: process.env.ETHEREALPASSWORD
-            }
-        }
-    }
-}
-const transporterOptions = getTransporterOptions()
-// config.util.getEnv('NODE_ENV')
-console.log(transporterOptions)
-
-
+//     if (config.util.getEnv('NODE_ENV') == "dev" | config.util.getEnv('NODE_ENV') == "test") {
+//         return {
+//             host: 'smtp.ethereal.email',
+//             port: 587,
+//             auth: {
+//                 user: process.env.ETHEREALEMAIL,
+//                 pass: process.env.ETHEREALPASSWORD
+//             }
+//         }
+//     }
+// }
+// const transporterOptions = getTransporterOptions()
+// // config.util.getEnv('NODE_ENV')
+// console.log(transporterOptions)
 
 
 
-const transporter = nodemailer.createTransport(transporterOptions);
 
 
-let mailDetails = {
-    from: 'michelle.renner38@ethereal.email',
-    to: 'leogorman123@gmail.com',
-    subject: 'Test mail',
-    html: '<h1>Test email from rhomis auth test<h1>'
-};
+// const transporter = nodemailer.createTransport(transporterOptions);
 
-transporter.sendMail(mailDetails, function (err, data) {
-    if (err) {
-        console.log(err);
-    } else {
-        console.log('Email sent successfully');
-    }
-});
+
+// let mailDetails = {
+//     from: 'michelle.renner38@ethereal.email',
+//     to: 'leogorman123@gmail.com',
+//     subject: 'Test mail',
+//     html: '<h1>Test email from rhomis auth test<h1>'
+// };
+
+// transporter.sendMail(mailDetails, function (err, data) {
+//     if (err) {
+//         console.log(err);
+//     } else {
+//         console.log('Email sent successfully');
+//     }
+// });
 
 
 
@@ -92,6 +92,7 @@ router.post('/register', async (req, res) => {
 
     if (!central_token) return res.status(500).send("Could not log administrator into central")
     // console.log("central token: " + central_token)
+
 
     const centralResultUsers = await axios({
         url: 'https://' + process.env.CENTRAL_URL + "/v1/users",

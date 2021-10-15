@@ -117,6 +117,8 @@ describe('User Registration', () => {
                 "password": password,
             }
         })
+        console.log("test result")
+        console.log(testResult)
 
         const newUser = await User.findOne({ _id: testResult.data.userID })
 
