@@ -4,6 +4,9 @@ const projectSchema = new mongoose.Schema({
     name: {
         type: String
     },
+    description: {
+        type: String
+    },
     forms: {
         type: Object,
     },
@@ -16,9 +19,12 @@ const projectSchema = new mongoose.Schema({
     centralID: {
         type: Number,
     },
-    date: {
+    createdAt: {
         type: Date,
         default: Date.now
+    },
+    updatedAt: {
+        type: Date
     }
 })
 

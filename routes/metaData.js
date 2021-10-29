@@ -13,7 +13,6 @@ const cors = require("cors");
 router.use(cors());
 router.options("*", cors());
 
-const getCentralToken = require('./centralAuth')
 
 router.get("/", auth, async (req, res) => {
     // write file then read it
@@ -28,7 +27,6 @@ router.get("/", auth, async (req, res) => {
         // const projects = await Project.find({})
         const forms = await Form.find({ users: req.user._id })
         // const forms = await Form.find({})
-
 
         const result = {
             user: user,

@@ -87,68 +87,38 @@ router.post('/register', async (req, res) => {
     const emailExist = await User.findOne({ email: req.body.email })
     if (emailExist) return res.status(400).send('Email already exists')
 
-    // Checking if the user already exists on ODK central
-    const central_token = await getCentralToken()
-
-    if (!central_token) return res.status(500).send("Could not log administrator into central")
-    // console.log("central token: " + central_token)
-
-
-    const centralResultUsers = await axios({
-        url: 'https://' + process.env.CENTRAL_URL + "/v1/users",
-        method: "get",
-        data: {
-            email: req.body.email
-        },
-        headers: {
-            'Authorization': 'Bearer ' + central_token
-        }
-    })
-
-    // console.log(centralResultUsers)
-
-    const user = centralResultUsers.data.filter(user => user.email === req.body.email)
-    if (user.length > 1) res.status(400).send("multiple users with that email in central database")
-    if (user.length === 1) res.status(400).send("A user with that email already exists in ODK central database")
-
-
     // Obtaining central access token
     try {
-        // console.log("Obtaining token")
 
-        // Add user to central database using the API
-        const centralResult = await axios({
-            url: 'https://' + process.env.CENTRAL_URL + "/v1/users",
-            method: "post",
-            data: {
-                email: req.body.email,
-                password: req.body.password
-            },
-            headers: {
-                'Authorization': 'Bearer ' + central_token
-            }
-        })
-        // console.log("Adding user")
-
-        // console.log(centralResult.data)
-        if (centralResult.data.id === undefined) throw "Unable to save user in ODK Central"
 
         // Save the user in the database
-
         // Hash passwords
         const salt = await bcrypt.genSalt(10)
         const hashPassword = await bcrypt.hash(req.body.password, salt)
+        const date = new Date()
         // Create a new user
-
         const user = new User({
             email: req.body.email,
-            centralID: centralResult.data.id,
             password: hashPassword,
-            role: "project",
+            roles: {
+                basic: true,
+                projectManager: [],
+                dataCollector: [],
+                projectAnalyst: [],
+                researcher: false,
+                administrator: false
+            },
             projects: [],
-            forms: []
-        });
+            forms: [],
+            log: [
+                {
+                    action: "user created",
+                    byEmail: req.body.email,
+                    date: date
 
+                }
+            ]
+        });
 
         const savedUser = await user.save();
 
@@ -159,7 +129,6 @@ router.post('/register', async (req, res) => {
         res.status(400).send("error: " + err)
     }
 })
-
 
 
 // Login
@@ -176,10 +145,21 @@ router.post('/login', async (req, res) => {
     const validPass = await bcrypt.compare(req.body.password, user.password);
     if (!validPass) return res.status(400).send('Incorrect password')
 
+    var expiry = new Date()
+    expiry.setHours(expiry.getHours() + 1)
+
+
     // Create and sign a token
-    const token = jwt.sign({ _id: user._id, email: user.email, role: user.role }, process.env.TOKEN_SECRET)
+    const token = jwt.sign({ _id: user._id, email: user.email, role: user.role, expiry: expiry }, process.env.TOKEN_SECRET)
+
+
+
+
     // Sending the JWT as a header but also as the 
-    res.header('Authorization', token).send(token)
+    res.header({
+        alg: "HS256",
+        typ: "JWT"
+    }).send(token)
 })
 
 
@@ -196,35 +176,10 @@ router.delete('/delete', auth, async (req, res) => {
     if (!userToDelete) return res.status.apply(400).send('User does not exist in local db, cannot delete')
 
     // Checking if the user already exists on ODK central
-    const central_token = await getCentralToken()
-    const centralResultUsers = await axios({
-        url: 'https://' + process.env.CENTRAL_URL + "/v1/users",
-        method: "get",
-        data: {
-            email: req.body.email,
-            password: req.body.password
-        },
-        headers: {
-            'Authorization': 'Bearer ' + central_token
-        }
-    })
 
-    const user = centralResultUsers.data.filter(user => user.email === req.user.email)
-
-    if (user.length === 0) return res.status(400).send("No users with that email in ODK central database")
 
     try {
-        const centralResult = await axios({
-            url: 'https://' + process.env.CENTRAL_URL + "/v1/users/" + userToDelete.centralID,
-            method: "delete",
-            data: {
-                email: req.body.email,
-                password: req.body.password
-            },
-            headers: {
-                'Authorization': 'Bearer ' + central_token
-            }
-        })
+
 
         const deletedUser = await User.findOneAndDelete({ _id: req.user._id })
         res.send(deletedUser)

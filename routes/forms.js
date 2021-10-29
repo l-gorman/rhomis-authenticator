@@ -22,11 +22,11 @@ router.post("/new", auth, async (req, res) => {
     // write file then read it
     //const writeStatus = await writeToFile(req, res)
     //const data = await readFile("./survey_modules/node_output.xlsx")
-
-    console.log(req.query.project_name)
-    console.log(req.query.form_name)
-    console.log(req.query.publish)
-    console.log(req.query.form_version)
+    console.log("user: " + req.user._id)
+    console.log("project_name: " + req.query.project_name)
+    console.log("form_name: " + req.query.form_name)
+    console.log("publish: " + req.query.publish)
+    console.log("form_version: " + req.query.form_version)
     try {
         if (req.query.project_name === undefined |
             req.query.form_name === undefined |
@@ -37,6 +37,8 @@ router.post("/new", auth, async (req, res) => {
 
         // Check which project we are looking for
         const previous_projects = await Project.findOne({ name: req.query.project_name })
+        console.log("previous_projects")
+
         console.log(previous_projects)
         if (!previous_projects) {
             return res.send("Could not the project you are looking for in the RHoMIS db")
@@ -63,8 +65,6 @@ router.post("/new", auth, async (req, res) => {
         // Load the xls form data from the request
         const data = await converToBuffer(req, res)
 
-
-
         // Send form to ODK central
         const centralResponse = await axios({
             method: "post",
@@ -79,6 +79,46 @@ router.post("/new", auth, async (req, res) => {
             .catch(function (error) {
                 throw error
             })
+
+
+        // Add an app user and assign to project
+        // https://private-709900-odkcentral.apiary-mock.com/v1/projects/projectId/app-users
+
+        const appUserCreation = await axios({
+            method: "post",
+            url: 'https://central.rhomis.cgiar.org/v1/projects/' + project_ID + '/app-users',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            data: {
+                displayName: 'data-collector'
+            }
+        })
+            .catch(function (error) {
+                throw error
+            })
+
+        const roleID = '2'
+        const formID = req.query.form_name
+        const appUserName = "data collector " + req.query.form_name
+        console.log(appUserCreation)
+        const appRoleAssignment = await axios({
+            method: "post",
+            url: 'https://central.rhomis.cgiar.org/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/assignments/' + roleID + '/' + appUserCreation.data.id,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            data: {
+                displayName: appUserName
+            }
+        })
+            .catch(function (error) {
+                throw error
+            })
+
+
 
         // Add form to projects collection
         const updated_project = await Project.updateOne(
@@ -103,6 +143,8 @@ router.post("/new", auth, async (req, res) => {
             centralID: centralResponse.data.xmlFormId,
             draft: !req.query.publish,
             complete: false,
+            collectionURL: "https://central.rhomis.cgiar.org/v1/key/" + appUserCreation.data.token + "/projects/109"
+
         }
 
         const formDataApi = await axios({

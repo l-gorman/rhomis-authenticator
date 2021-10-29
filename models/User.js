@@ -14,13 +14,10 @@ const userSchema = new mongoose.Schema({
         min: 6,
         max: 1024,
     },
-    centralID: {
-        type: Number,
 
-    },
-    role: {
-        type: String,
-        required: true,
+    roles: {
+        type: Object,
+        // required: true,
         min: 6,
         max: 1024,
     },
@@ -42,6 +39,9 @@ const userSchema = new mongoose.Schema({
     forms: {
         type: Object,
     },
+    log: {
+        type: Object
+    }
 })
 
 module.exports = mongoose.model('User', userSchema)

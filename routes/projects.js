@@ -22,14 +22,15 @@ const getCentralToken = require('./centralAuth')
 router.post("/create", auth, async (req, res) => {
     // Authenticate for central server`
 
-
     const central_token = await getCentralToken()
 
     // Make sure there is a "name" argument provided in the request
     if (!req.body.name) return res.send("Need to include project name to create project")
+    if (!req.body.description) return res.send("Need to include project name to create project")
 
     // Check if project exists in local mongoDb
     const projectExist = await Project.findOne({ name: req.body.name })
+    console.log(projectExist)
     if (projectExist) return res.status(400).send('Project already exists, please select a different name')
 
     // Check if project exists in ODK central
@@ -62,6 +63,7 @@ router.post("/create", auth, async (req, res) => {
 
         const projectInformation = {
             name: req.body.name,
+            description: req.body.description,
             centralID: projectCreationResult.data.id,
             users: [req.user._id],
             forms: []
@@ -78,34 +80,32 @@ router.post("/create", auth, async (req, res) => {
         })
 
         // Save the new project in the database
-        const savedProject = await new Project(projectInformation).save()
+        const savedProject = await new Project(projectInformation)
+        await savedProject.save(function (error) {
+            console.log("error")
+            if (error) { res.send({ 'error': error }); }
+        })
 
-
-        console.log(projectInformation)
 
 
         //LINK THE USER CREATING THE PROJECT, TO THEIR PROJECT
         // Finding user all user information
-        const user = await User.findOne({ _id: req.user._id })
+        // const user = await User.findOne({ _id: req.user._id })
 
-        // Assigning user to project
-        const projectAssignmentResult = await axios({
-            url: 'https://' + process.env.CENTRAL_URL + "/v1/projects/" + projectCreationResult.data.id + "/assignments/manager/" + user.centralID,
-            method: "post",
-            headers: {
-                'Authorization': 'Bearer ' + central_token
-            }
-        })
 
-        // const previous_projects = user.projects
-        // previous_projects.push(req.body.name)
+
         const updated_user = await User.updateOne(
             { _id: req.user._id },
-            { $push: { projects: req.body.name } });
-
-
-
-
+            {
+                $push: {
+                    projects: req.body.name,
+                    "roles.projectManager": req.body.name,
+                    "roles.dataCollector": req.body.name,
+                    "roles.projectAnalyst": req.body.name
+                }
+            },
+        );
+        console.log(updated_user)
 
 
         return res.send("Project Saved")
@@ -171,7 +171,14 @@ router.delete("/delete", auth, async (req, res) => {
         // Delete projects from the user collection
         const projectDeleteUser = await User.updateMany(
             {},
-            { $pull: { projects: req.body.name } })
+            {
+                $pull: {
+                    projects: req.body.name,
+                    "roles.projectManager": req.body.name,
+                    "roles.dataCollector": req.body.name,
+                    "roles.projectAnalyst": req.body.name,
+                }
+            })
 
 
         // Delete forms associated with project from the forms collection

@@ -34,6 +34,20 @@ const loginValidator = (data) => {
     return schema.validate(data)
 }
 
+// PROJECT
+
+const projectValidator = data =>{
+    const schema = joi.object({
+        name: Joi.string().
+        min(3).
+        required(),
+
+        description: Joi.string().
+        min(25).
+        required()
+    })
+}
+
 module.exports.loginValidator = loginValidator;
 
 
