@@ -34,78 +34,15 @@ describe('User Registration', () => {
     // The Full test
     it('Should register a user which does not exist and save in data base', async function () {
 
-        // Test admin email and password
-        const admin_email = "admin@xyz.com"
-        const admin_password = "test_admin_password"
-
-
         // defining email an password first
         const email = "user2@xyz.com"
         const password = "test_password"
 
+
+
+
         // Creating the fake responses from the central URL to 
         // mimic test results
-        let scope = nock('https://' + process.env.CENTRAL_URL)
-            // Obtaining central authentication token
-            .post('/v1/sessions', {
-                email: process.env.CENTRAL_EMAIL,
-                password: process.env.CENTRAL_PASSWORD
-            })
-            .reply(200, {
-                "token": "1wGY8ahSXsa28AeECrPRht8VWOC7tLAP9EXE63tCvKqGaUdCW5Ae38F4RQ5y5u$O",
-                "csrf": "$oTpzNLisrQ2JEKD4hAhfNHJf$Bwfb4gIW4eJB7soWwUIJeu4$jdnI4hFSZg0zo3",
-                "expiresAt": "2021-09-28T15:49:14.634Z",
-                "createdAt": "2021-09-27T15:49:14.635Z"
-            })
-            // Getting the list of users from ODK central
-            .get('/v1/users', {
-                email: email
-            })
-            .matchHeader('Authorization', 'Bearer 1wGY8ahSXsa28AeECrPRht8VWOC7tLAP9EXE63tCvKqGaUdCW5Ae38F4RQ5y5u$O')
-            .reply(200,
-                [
-                    {
-                        "email": "user_1@xyz.org",
-                        "id": 102,
-                        "type": "user",
-                        "displayName": "user_1@xyz.org",
-                        "createdAt": "2021-10-22T10:53:00.042Z",
-                        "updatedAt": null
-                    },
-                    {
-                        "email": "user_2@xyz.org",
-                        "id": 205,
-                        "type": "user",
-                        "displayName": "user_2@xyz.org",
-                        "createdAt": "2021-08-22T10:53:00.042Z",
-                        "updatedAt": null
-                    },
-                    {
-                        "email": "user_3@xyz.org",
-                        "id": 186,
-                        "type": "user",
-                        "displayName": "user_3@xyz.org",
-                        "createdAt": "2021-011-22T10:53:00.042Z",
-                        "updatedAt": null
-                    }
-                ]
-            )
-            // Adding a user to the central database
-            .post('/v1/users', {
-                email: email,
-                password: password
-            })
-            .matchHeader('Authorization', 'Bearer 1wGY8ahSXsa28AeECrPRht8VWOC7tLAP9EXE63tCvKqGaUdCW5Ae38F4RQ5y5u$O')
-            .reply(200,
-                {
-                    "email": "user2@xyz.com",
-                    "id": 226,
-                    "type": "user",
-                    "displayName": "user2@xyz.com",
-                    "createdAt": "2021-09-28T08:09:58.842Z",
-                    "updatedAt": null
-                }
-            )
 
 
         // Conducting the actual test
@@ -117,19 +54,27 @@ describe('User Registration', () => {
                 "password": password,
             }
         })
-        console.log("test result")
-        console.log(testResult)
 
         const newUser = await User.findOne({ _id: testResult.data.userID })
 
         assert.equal(newUser.email, "user2@xyz.com");
-        assert.equal(newUser.centralID, 226);
-        assert.equal(newUser.role, "project");
+        assert.equal(newUser.roles.administrator, false);
+        assert.equal(newUser.roles.basic, true);
+        assert.equal(newUser.roles.researcher, false);
+
+        assert.equal(newUser.roles.dataCollector.length, 0);
+        assert.equal(newUser.roles.projectAnalyst.length, 0);
+        assert.equal(newUser.roles.projectManager.length, 0);
+
+
         should.exist(newUser.projects);
         should.exist(newUser.forms);
         should.exist(newUser._id);
         should.exist(newUser.createdAt);
         should.exist(newUser.__v);
+
+        await User.deleteOne({ _id: testResult.data.userID })
+
     })
 
     it('Should pick up on missing information in user registration', async function () {

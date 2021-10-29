@@ -18,22 +18,32 @@ const Form = require('../models/Form');
 
 const getCentralToken = require('./centralAuth')
 
-// Create Project
+
 router.post("/create", auth, async (req, res) => {
     // Authenticate for central server`
 
+    console.log("Logging server into central")
     const central_token = await getCentralToken()
 
     // Make sure there is a "name" argument provided in the request
-    if (!req.body.name) return res.send("Need to include project name to create project")
-    if (!req.body.description) return res.send("Need to include project name to create project")
+    if (!req.body.name) {
+        console.log("Project name not included in request")
+        return res.send("Need to include project name to create project")
+    }
+    if (!req.body.description) {
+        console.log("Project description not included in request")
+        return res.send("Need to include project name to create project")
+    }
 
     // Check if project exists in local mongoDb
     const projectExist = await Project.findOne({ name: req.body.name })
-    console.log(projectExist)
-    if (projectExist) return res.status(400).send('Project already exists, please select a different name')
+    if (projectExist) {
+        console.log("Project already exists in mongoDB")
+        return res.status(400).send('Project already exists, please select a different name')
+    }
 
     // Check if project exists in ODK central
+    console.log("Finding previous projects on ODK central")
     const projectResultCentral = await axios({
         url: 'https://' + process.env.CENTRAL_URL + "/v1/projects",
         method: "get",
@@ -43,11 +53,14 @@ router.post("/create", auth, async (req, res) => {
     })
 
     const projectExistsCentral = projectResultCentral.data.filter(project => project.name === req.body.name)
-    if (projectExistsCentral.length > 0) return res.send("Project already exists in Central database. Please choose another project name")
+    if (projectExistsCentral.length > 0) {
+        console.log("Project already exists in ODK central database")
 
+        return res.send("Project already exists in Central database. Please choose another project name")
+    }
     try {
-
         //Create a project on Central 
+        console.log("Creating the project on ODK central")
         const projectCreationResult = await axios({
             url: 'https://' + process.env.CENTRAL_URL + "/v1/projects",
             method: "post",
@@ -59,8 +72,10 @@ router.post("/create", auth, async (req, res) => {
             }
         })
         // Check if the request returned a project with the Central ID
-        if (projectCreationResult.data.id === undefined) throw ("error in creating central project")
-
+        if (projectCreationResult.data.id === undefined) {
+            console.log("Error when creating central project. No id returned")
+            throw ("error in creating central project")
+        }
         const projectInformation = {
             name: req.body.name,
             description: req.body.description,
@@ -69,7 +84,7 @@ router.post("/create", auth, async (req, res) => {
             forms: []
         }
 
-
+        console.log("Saving project detail onto the RHoMIS data API")
         const projectCreateDataApi = await axios({
             url: apiURL + "/api/meta-data/project",
             method: "post",
@@ -80,33 +95,26 @@ router.post("/create", auth, async (req, res) => {
         })
 
         // Save the new project in the database
+        console.log("Saving into the main database")
+
         const savedProject = await new Project(projectInformation)
-        await savedProject.save(function (error) {
-            console.log("error")
-            if (error) { res.send({ 'error': error }); }
-        })
-
-
+        const saveResult = await savedProject.save()
 
         //LINK THE USER CREATING THE PROJECT, TO THEIR PROJECT
         // Finding user all user information
         // const user = await User.findOne({ _id: req.user._id })
-
-
-
+        console.log("Adding the project information to the User who made the request")
         const updated_user = await User.updateOne(
             { _id: req.user._id },
             {
                 $push: {
                     projects: req.body.name,
                     "roles.projectManager": req.body.name,
-                    "roles.dataCollector": req.body.name,
                     "roles.projectAnalyst": req.body.name
                 }
             },
         );
-        console.log(updated_user)
-
+        console.log("done")
 
         return res.send("Project Saved")
     } catch (err) {
@@ -116,17 +124,27 @@ router.post("/create", auth, async (req, res) => {
 
 // Delete Project
 router.delete("/delete", auth, async (req, res) => {
-
+    console.log("Logging into central")
     const central_token = await getCentralToken()
 
-    if (!req.body.name) return res.status(400).send("Need to include project name to create project")
+    if (!req.body.name) {
+        console.log("Project name not included in request")
+
+        return res.status(400).send("Need to include project name to create project")
+    }
 
     // Find project in database
+    console.log("Finding project in database")
+
     const project = await Project.findOne({ name: req.body.name })
-    if (!project) return res.status(400).send("Project does not exist in database")
+    if (!project) {
+        console.log("Project does not exist in database")
+
+        return res.status(400).send("Project does not exist in database")
+    }
 
     // Check for project in ODK central
-
+    console.log("Checking for project in ODK central")
     const centralProjects = await axios({
         url: 'https://' + process.env.CENTRAL_URL + "/v1/projects",
         method: "get",
@@ -137,14 +155,20 @@ router.delete("/delete", auth, async (req, res) => {
 
     const matchedProjects = centralProjects.data.filter(project => project.name == req.body.name)
 
-    if (matchedProjects == 0) return res.status(400).send("Project does not exist in ODK central")
-    if (matchedProjects > 1) return res.status(400).send("More than one project with this name")
+    if (matchedProjects == 0) {
+        console.log("Project does not exist in ODK central")
+        return res.status(400).send("Project does not exist in ODK central")
+    }
+    if (matchedProjects > 1) {
+        console.log("More than one project with this name")
+        return res.status(400).send("More than one project with this name")
+    }
 
     const centralID = matchedProjects[0].id
 
     try {
         // Delete the project on central
-        console.log(centralID)
+        console.log("Deleting the project on ODK central")
         const centralDeleteResult = await axios({
             url: 'https://' + process.env.CENTRAL_URL + "/v1/projects/" + centralID,
             method: "delete",
@@ -156,39 +180,45 @@ router.delete("/delete", auth, async (req, res) => {
 
 
         // Delete forms associated with a project from the User collection
+        console.log("Finding the forms to delete which are associated with the project")
         const forms = await Form.find({}, "name -_id")
         const formsToDelete = forms.map((form) => form.name)
 
+        console.log("Deleting the forms from user")
         const modifiedUsers = await User.updateMany(
             {},
             {
                 $pull: {
-                    forms: { $in: formsToDelete }
+                    forms: { $in: formsToDelete },
+                    "roles.dataCollector": { $in: formsToDelete }
                 }
             }
         )
 
         // Delete projects from the user collection
+        console.log("Deleting the projects from the user")
         const projectDeleteUser = await User.updateMany(
             {},
             {
                 $pull: {
                     projects: req.body.name,
                     "roles.projectManager": req.body.name,
-                    "roles.dataCollector": req.body.name,
                     "roles.projectAnalyst": req.body.name,
                 }
             })
 
 
         // Delete forms associated with project from the forms collection
+        console.log("Deleting forms")
         const deletedForms = await Form.deleteMany({ project: req.body.name })
         console.log(deletedForms)
 
         // Delete the project from the database
+        console.log("Deleting projects")
         const projectToDelete = await Project.deleteOne({ name: req.body.name })
 
         // Deleting processed data
+        console.log("Deleting projects from the data API")
         const deletedProcessedData = await axios({
             url: apiURL + "/api/delete-project",
             method: "delete",
@@ -200,6 +230,7 @@ router.delete("/delete", auth, async (req, res) => {
             }
         })
 
+        console.log("done")
         return res.send(projectToDelete)
 
     } catch (err) {
@@ -214,14 +245,11 @@ router.post("/assign", auth, (req, res) => {
     res.send("")
 })
 
-
 // Assign user
 router.post("/unassign", auth, (req, res) => {
     const central_token = getCentralToken()
 
     res.send("")
 })
-
-
 
 module.exports = router;

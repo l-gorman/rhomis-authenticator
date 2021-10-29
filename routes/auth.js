@@ -71,7 +71,12 @@ router.options("*", cors());
 
 
 
+router.get("/", auth, async (req, res) => {
+    const userInfo = await User.findOne({ _id: req.user._id })
+    console.log(userInfo.roles)
 
+    res.status(200).send(userInfo.roles)
+})
 
 
 

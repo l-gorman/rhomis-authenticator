@@ -21,7 +21,7 @@ router.get("/", auth, async (req, res) => {
 
 
     try {
-        const user = await User.find({ _id: req.user._id }, 'projects forms -_id')
+        const user = await User.findOne({ _id: req.user._id }, 'projects forms roles -_id')
 
         const projects = await Project.find({ users: req.user._id })
         // const projects = await Project.find({})

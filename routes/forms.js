@@ -36,6 +36,7 @@ router.post("/new", auth, async (req, res) => {
         }
 
         // Check which project we are looking for
+
         const previous_projects = await Project.findOne({ name: req.query.project_name })
         console.log("previous_projects")
 
@@ -84,6 +85,7 @@ router.post("/new", auth, async (req, res) => {
         // Add an app user and assign to project
         // https://private-709900-odkcentral.apiary-mock.com/v1/projects/projectId/app-users
 
+        const appUserName = "data-collector-" + req.query.form_name
         const appUserCreation = await axios({
             method: "post",
             url: 'https://central.rhomis.cgiar.org/v1/projects/' + project_ID + '/app-users',
@@ -92,7 +94,7 @@ router.post("/new", auth, async (req, res) => {
                 'Authorization': 'Bearer ' + token
             },
             data: {
-                displayName: 'data-collector'
+                displayName: appUserName
             }
         })
             .catch(function (error) {
@@ -101,8 +103,6 @@ router.post("/new", auth, async (req, res) => {
 
         const roleID = '2'
         const formID = req.query.form_name
-        const appUserName = "data collector " + req.query.form_name
-        console.log(appUserCreation)
         const appRoleAssignment = await axios({
             method: "post",
             url: 'https://central.rhomis.cgiar.org/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/assignments/' + roleID + '/' + appUserCreation.data.id,
@@ -110,9 +110,6 @@ router.post("/new", auth, async (req, res) => {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            data: {
-                displayName: appUserName
-            }
         })
             .catch(function (error) {
                 throw error
@@ -129,11 +126,23 @@ router.post("/new", auth, async (req, res) => {
         // Add form to user collection
         const updated_user = await User.updateOne(
             { _id: req.user._id },
-            { $push: { forms: req.query.form_name } });
+            {
+                $push: {
+                    forms: req.query.form_name,
+                    "roles.dataCollector": req.query.form_name,
+                }
+            });
 
         // Add form to forms collection
         console.log(req.query.project_name)
         console.log(centralResponse.data)
+
+        const project = await Project.findOne(
+            { name: req.query.project_name }
+        )
+        if (project.centralID === undefined) {
+            console.log("could not find centralID of project you are looking for")
+        }
 
         const formInformation = {
             name: req.query.form_name,
@@ -143,7 +152,7 @@ router.post("/new", auth, async (req, res) => {
             centralID: centralResponse.data.xmlFormId,
             draft: !req.query.publish,
             complete: false,
-            collectionURL: "https://central.rhomis.cgiar.org/v1/key/" + appUserCreation.data.token + "/projects/109"
+            collectionURL: "https://central.rhomis.cgiar.org/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID
 
         }
 
