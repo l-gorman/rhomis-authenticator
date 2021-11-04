@@ -115,6 +115,18 @@ router.post("/new", auth, async (req, res) => {
                 throw error
             })
 
+        const draftDetails = await axios({
+            method: "get",
+            url: 'https://central.rhomis.cgiar.org/v1/projects/' + project_ID + '/forms/' + req.query.form_name + "/draft",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+        })
+            .catch(function (error) {
+                throw error
+            })
+
 
 
         // Add form to projects collection
@@ -144,17 +156,43 @@ router.post("/new", auth, async (req, res) => {
             console.log("could not find centralID of project you are looking for")
         }
 
+        let publish = false
+
+        if (req.query.publish === "true") {
+            publish = true
+        }
+
         const formInformation = {
             name: req.query.form_name,
             project: req.query.project_name,
             formVersion: req.query.form_version,
             users: [req.user._id],
             centralID: centralResponse.data.xmlFormId,
-            draft: !req.query.publish,
+            draft: !publish,
             complete: false,
-            collectionURL: "https://central.rhomis.cgiar.org/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID
+            collectionDetails: {
+                general: {
+                    server_url: "https://central.rhomis.cgiar.org/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID,
+                    form_update_mode: "match_exactly",
+                    autosend: "wifi_and_cellular"
+                },
+                project: { name: req.query.project_name },
+            },
+            draftCollectionDetails: {
+                general: {
+                    server_url: "https://central.rhomis.cgiar.org/v1/test/" + draftDetails.data.draftToken + "/projects/" + project.centralID + "/forms/" + req.query.form_name + "/draft",
+                    form_update_mode: "match_exactly",
+                    autosend: "wifi_and_cellular"
+                },
+                project: { name: "[Draft] " + req.query.form_name },
+            }
+
 
         }
+
+        console.log("formInformation")
+
+        console.log(formInformation)
 
         const formDataApi = await axios({
             url: apiURL + "/api/meta-data/form",
@@ -165,8 +203,9 @@ router.post("/new", auth, async (req, res) => {
             }
         })
 
-        savedForm = await new Form(formInformation).save()
-
+        console.log("saving form")
+        savedForm = await new Form(formInformation)
+        savedForm.save()
 
 
 

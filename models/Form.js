@@ -2,6 +2,25 @@ const mongoose = require('mongoose');
 
 
 
+
+const collectionDetailsSchema = new mongoose.Schema({
+    general: {
+        type: Object
+    },
+    project: {
+        type: Object
+    },
+    admin: {
+        type: Object,
+        default: {}
+    }
+
+}, {
+    minimize: false,
+    _id: false,
+    strict: false
+})
+
 const formSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -31,10 +50,13 @@ const formSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    collectionURL: {
-        type: String
+    collectionDetails: {
+        type: collectionDetailsSchema,
+    },
+    draftCollectionDetails: {
+        type: collectionDetailsSchema,
     }
 
-})
+}, { minimize: false })
 
 module.exports = mongoose.model('Form', formSchema)
