@@ -18,6 +18,181 @@ router.options("*", cors());
 
 const getCentralToken = require('./centralAuth')
 
+router.post("/publish", auth, async (req, res) => {
+
+    console.log("finalizing form")
+    // Authenticate on ODK central  
+    const token = await getCentralToken()
+
+    console.log(req.query.project_name)
+    console.log(req.query.form_name)
+    if (req.query.project_name === undefined |
+        req.query.form_name === undefined) {
+        return res.status(400).send("Missing information in request")
+    }
+
+    const previous_projects = await Project.findOne({ name: req.query.project_name })
+    console.log("previous projects")
+    console.log(previous_projects)
+    if (!previous_projects) return res.status(400).send("Project does not exist in RHoMIS db")
+
+    const project_ID = previous_projects.centralID
+
+    const previous_forms = await Form.findOne({ name: req.query.form_name })
+    console.log("previous_forms")
+    console.log(previous_forms)
+    if (!previous_forms) return res.status(400).send("Form does not exist in RHoMIS db")
+
+    try {
+        console.log("making central request")
+        const centralResponse = await axios({
+            method: "post",
+            url: 'https://central.rhomis.cgiar.org/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+        })
+            .catch(function (error) {
+                throw error
+            })
+        console.log("centralResponse")
+
+        console.log(centralResponse)
+
+        const updated_form = await Form.updateOne(
+            {
+                name: req.query.form_name,
+                project: req.query.project_name
+            },
+            {
+                draft: false,
+            }
+        )
+
+
+        return res.status(200).send("Form finalized")
+    } catch (err) {
+
+    }
+    // https://central.rhomis.cgiar.org/v1/projects/projectId/forms/xmlFormId/draft/publish
+
+
+})
+
+router.post("/new-draft", auth, async (req, res) => {
+    console.log("user: " + req.user._id)
+    console.log("project_name: " + req.query.project_name)
+    console.log("form_name: " + req.query.form_name)
+    console.log("publish: " + req.query.publish)
+    console.log("form_version: " + req.query.form_version)
+    try {
+        if (req.query.project_name === undefined |
+            req.query.form_name === undefined |
+            req.query.form_version === undefined |
+            req.query.publish === undefined) {
+            return res.status(400).send("Missing information in request")
+        }
+
+        // Check which project we are looking for
+
+        const previous_projects = await Project.findOne({ name: req.query.project_name })
+        console.log("previous_projects")
+
+        console.log(previous_projects)
+        if (!previous_projects) {
+            return res.send("Could not the project you are looking for in the RHoMIS db")
+        }
+
+        // Check if the authenticated user is actually linked to the project under question
+        console.log(previous_projects.users)
+        console.log(req.user._id)
+
+        if (!previous_projects.users.includes(req.user._id)) return res.send("Authenticated user does not have permissions to modify this project")
+
+        const project_ID = previous_projects.centralID
+
+        // Check if form exists
+        const previous_forms = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
+        if (!previous_forms) {
+            return res.status(400).send("Form does not exist so cannot update")
+        }
+
+
+        // Authenticate on ODK central  
+        const token = await getCentralToken()
+
+        // Load the xls form data from the request
+        const data = await converToBuffer(req, res)
+
+        // Send form to ODK central
+        const centralResponse = await axios({
+            method: "post",
+            url: 'https://central.rhomis.cgiar.org/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft?ignoreWarnings=true',
+            headers: {
+                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'X-XlsForm-FormId-Fallback': req.query.form_name,
+                'Authorization': 'Bearer ' + token
+            },
+            data: data
+        })
+            .catch(function (error) {
+                throw error
+            })
+
+
+
+
+        // Update forms collection
+
+
+        const project = await Project.findOne(
+            { name: req.query.project_name }
+        )
+        if (project.centralID === undefined) {
+            console.log("could not find centralID of project you are looking for")
+        }
+
+        let publish = false
+
+        if (req.query.publish === "true") {
+            publish = true
+        }
+
+
+
+
+
+
+        console.log("saving form")
+        const updated_form = await Form.updateOne(
+            { name: "", project: "" },
+            {
+                formVersion: req.query.form_version
+            }
+        )
+
+        const formDataApi = await axios({
+            url: apiURL + "/api/meta-data/form",
+            method: "post",
+            data: updated_form,
+            headers: {
+                'Authorization': req.header('Authorization')
+            }
+        })
+
+        res.status(200).send("Form successfully updated")
+
+    } catch (err) {
+        console.log(err)
+        res.send(err)
+    }
+
+    return
+})
+
+
+
 router.post("/new", auth, async (req, res) => {
     // write file then read it
     //const writeStatus = await writeToFile(req, res)
@@ -209,7 +384,7 @@ router.post("/new", auth, async (req, res) => {
 
 
 
-        res.send("Project successfully created")
+        res.send("Form successfully created")
 
         // res.send(centralResponse.data)
 
@@ -220,6 +395,10 @@ router.post("/new", auth, async (req, res) => {
 
     return
 })
+
+
+
+
 
 
 async function converToBuffer(req, res) {

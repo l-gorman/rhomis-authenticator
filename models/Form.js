@@ -46,7 +46,7 @@ const formSchema = new mongoose.Schema({
     complete: {
         type: Boolean,
     },
-    date: {
+    createdAt: {
         type: Date,
         default: Date.now
     },
