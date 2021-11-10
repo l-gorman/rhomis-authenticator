@@ -24,6 +24,8 @@ const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100
 });
+app.use(apiLimiter);
+
 
 
 // Getting information from the config files
