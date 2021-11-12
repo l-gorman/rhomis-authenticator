@@ -33,19 +33,30 @@ console.log('Running "' + config.util.getEnv('NODE_ENV') + '" environment')
 const dbHost = config.get('dbConfig.host')
 const port = config.get('dbConfig.port')
 
-// Connect to DB
-mongoose.connect(dbHost,
-    {
-        useUnifiedTopology: true,
-        useNewUrlParser: true
-    },
-    () => {
-        console.log("Connected to " + dbHost)
-    })
 
+
+var connectWithRetry = function () {
+    console.log("Connecting to datase")
+    return mongoose.connect(dbHost, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    }, function (err) {
+        if (err) {
+            console.error('Failed to connect to mongo on startup - retrying in 5 sec \n ', err);
+            setTimeout(connectWithRetry, 5000);
+        }
+    });
+
+}
+connectWithRetry()
+
+const db = mongoose.connection;
+db.once("open", (_) => {
+    console.log("Database connected:", dbHost);
+});
 // Ensuring that queries are not limited by size
-app.use(express.json({ limit: '200mb' }));
-app.use(express.urlencoded({ limit: '200mb', extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Middleware
 // Add this to allow us to use post requests with JSON
