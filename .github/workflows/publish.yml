@@ -22,6 +22,6 @@ jobs:
 
       - name: Build the api image
         run: |
-          docker build . --tag ghcr.io/l-gorman/rhomis-auth:latest
-          docker image push ghcr.io/l-gorman/rhomis-auth:latest
-          docker push ghcr.io/l-gorman/rhomis-auth:latest
+          docker build . --tag ghcr.io/l-gorman/rhomis-authenticator:latest
+          docker image push ghcr.io/l-gorman/rhomis-authenticator:latest
+          docker push ghcr.io/l-gorman/rhomis-authenticator:latest
