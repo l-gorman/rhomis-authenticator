@@ -1,9 +1,17 @@
 const express = require('express');
 const app = express();
+
+
 const dotenv = require('dotenv')
 dotenv.config()
 
 const mongoose = require('mongoose')
+
+if (process.env.NODE_ENV === "production") {
+    console.log(process.env.DOCKER_MESSAGE)
+
+}
+console.log(process.env.TOKEN_SECRET)
 
 // Import Routes
 const authRoute = require('./routes/auth')
@@ -30,8 +38,8 @@ const apiLimiter = rateLimit({
 let config = require('config'); //we load the db location from the JSON files
 
 console.log('Running "' + config.util.getEnv('NODE_ENV') + '" environment')
-const dbHost = config.get('dbConfig.host')
-const port = config.get('dbConfig.port')
+let dbHost = config.get('dbConfig.host')
+let port = config.get('dbConfig.port')
 
 
 

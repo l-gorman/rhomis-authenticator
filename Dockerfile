@@ -14,7 +14,7 @@ COPY . .
 
 EXPOSE 3002
 
-CMD ./node_modules/.bin/cross-env NODE_ENV=prod node ./app.js
+CMD ./node_modules/.bin/cross-env NODE_ENV=production node ./app.js
 
 
 

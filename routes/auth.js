@@ -157,9 +157,6 @@ router.post('/login', async (req, res) => {
     // Create and sign a token
     const token = jwt.sign({ _id: user._id, email: user.email, role: user.role, expiry: expiry }, process.env.TOKEN_SECRET)
 
-
-
-
     // Sending the JWT as a header but also as the 
     res.header({
         alg: "HS256",
@@ -179,9 +176,6 @@ router.delete('/delete', auth, async (req, res) => {
     const userToDelete = await User.findOne({ _id: req.user._id })
 
     if (!userToDelete) return res.status.apply(400).send('User does not exist in local db, cannot delete')
-
-    // Checking if the user already exists on ODK central
-
 
     try {
 
