@@ -1,0 +1,30 @@
+version: "3"
+services:
+        rhomis-api:
+          container_name: rhomis-authenticator
+          image: lgorman/rhomis-authenticator
+          restart: always
+          build: .
+          ports:
+            - "3002:3002"
+          networks:
+            - app-network
+          env_file:
+            - .env
+          environment:
+            - DOCKER_MESSAGE="hello from docker"
+            - NODE_ENV="production"
+        mongo:
+          container_name: rhomis-auth-db
+          image: mongo
+          volumes:
+            - mongodb:/data/db
+          ports:
+            - "27017:27017"
+          networks:
+            - app-network
+networks:
+  app-network:
+
+volumes:
+  mongodb:
