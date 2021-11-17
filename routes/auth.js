@@ -79,10 +79,36 @@ router.get("/", auth, async (req, res) => {
 })
 
 
+async function verifyCaptcha(props) {
+
+    console.log(process.env.RECAPTCHA_SECRET_KEY)
+    console.log(props.captchaToken)
+    try {
+        // await timeout(2000)
+
+        const query_params = {
+            "secret": process.env.RECAPTCHA_SECRET_KEY,
+            "response": props.captchaToken
+        }
+
+        const response = await axios({
+            method: "post",
+            url: "https://www.google.com/recaptcha/api/siteverify",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            params: query_params
+        })
+        console.log(response)
+        return (response)
+    } catch (err) {
+        console.log(err)
+        return (err)
+
+    }
+}
+
 
 // Registration route
 router.post('/register', async (req, res) => {
-
 
     // Validate date before making user
     const { error } = registrationValidator(req.body);
@@ -95,6 +121,11 @@ router.post('/register', async (req, res) => {
     // Obtaining central access token
     try {
 
+        // Verify User with Recaptcha
+        const captchaResult = await verifyCaptcha({ captchaToken: req.body.captchaToken })
+        console.log("captchaResult")
+        console.log(captchaResult)
+
 
         // Save the user in the database
         // Hash passwords
@@ -103,6 +134,9 @@ router.post('/register', async (req, res) => {
         const date = new Date()
         // Create a new user
         const user = new User({
+            title: req.body.title,
+            firstName: req.body.firstName,
+            surname: req.body.surname,
             email: req.body.email,
             password: hashPassword,
             roles: {

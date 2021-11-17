@@ -3,6 +3,15 @@ const Joi = require('@hapi/joi');
 
 const registrationValidator = (data) => {
     const schema = Joi.object({
+        title: Joi.string().
+            required(),
+        firstName: Joi.string().
+            required(),
+        surname: Joi.string().
+            required(),
+        captchaToken: Joi.string().
+            required(),
+
         email: Joi.string().
             min(6).
             required().
@@ -36,15 +45,15 @@ const loginValidator = (data) => {
 
 // PROJECT
 
-const projectValidator = data =>{
+const projectValidator = data => {
     const schema = joi.object({
         name: Joi.string().
-        min(3).
-        required(),
+            min(3).
+            required(),
 
         description: Joi.string().
-        min(25).
-        required()
+            min(25).
+            required()
     })
 }
 

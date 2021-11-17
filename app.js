@@ -11,7 +11,7 @@ if (process.env.NODE_ENV === "production") {
     console.log(process.env.DOCKER_MESSAGE)
 
 }
-console.log(process.env.TOKEN_SECRET)
+// console.log(process.env.RECAPTCHA_SECRET_KEY)
 
 // Import Routes
 const authRoute = require('./routes/auth')
