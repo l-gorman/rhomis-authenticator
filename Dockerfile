@@ -1,6 +1,6 @@
 FROM node:14
 
-LABEL org.opencontainers.image.source="https://github.com/lgorman/rhomis-authenticator"
+LABEL org.opencontainers.image.source="https://github.com/l-gorman/rhomis-authenticator"
 
 # Create the app directory
 WORKDIR /usr/src/rhomis-authenticator
