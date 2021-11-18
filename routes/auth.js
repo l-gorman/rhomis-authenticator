@@ -146,7 +146,7 @@ router.post('/register', async (req, res) => {
                 basic: true,
                 projectManager: [],
                 dataCollector: [],
-                projectAnalyst: [],
+                analyst: [],
                 researcher: false,
                 administrator: false
             },
@@ -270,7 +270,7 @@ router.post('/project-manager', auth, async (req, res) => {
             },
             {
                 $addToSet: {
-                    "roles.projectManager": req.body.name,
+                    "roles.projectManager": req.body.projectName,
                     "roles.analyst": { $each: formIDs },
                     "roles.dataCollector": { $each: formIDs }
                 }
@@ -287,9 +287,141 @@ router.post('/project-manager', auth, async (req, res) => {
 
 router.post('/data-collector', auth, async (req, res) => {
 
+    console.log("Finding the user")
+
+    const otherUser = await User.findOne({ "email": req.body.email })
+    console.log("Checking if the user exists")
+    if (!otherUser) {
+        return res.status(400).send("User does not exist")
+    }
+
+    if (otherUser.roles.dataCollector.includes(req.body.formName)) {
+        return res.status(400).send("User is already a project manager for this project")
+    }
+    console.log("Checking if the IDs are the same")
+
+    if (otherUser._id.toString() === req.user._id) {
+        return res.status(400).send("Please enter the email of another user")
+
+    }
+
+
+    console.log("Updating DB")
+    try {
+
+        const form = await Form.findOne(
+            {
+                "name": req.body.formName
+            })
+
+        console.log("Adding User to project")
+        const updatedProject = await Project.updateOne(
+            {
+                name: form.project
+            },
+            {
+                $addToSet: {
+                    users: otherUser._id.toString()
+                }
+            })
+
+        console.log("Adding Users to forms")
+        const updatedForms = await Form.updateOne({
+            name: req.body.formName
+        },
+            {
+                $addToSet: {
+                    users: otherUser._id.toString()
+                }
+            })
+        console.log("Adding form to user")
+
+        const updatedUser = await User.updateOne(
+            {
+                _id: otherUser._id
+            },
+            {
+                $addToSet: {
+                    "roles.dataCollector": req.body.formName
+                }
+            })
+        console.log(updatedUser)
+
+        return res.status(200).send(updatedUser)
+
+    } catch (err) {
+        return res.status(400).send(err)
+    }
+
 })
 
 router.post('/analyst', auth, async (req, res) => {
+
+
+    const otherUser = await User.findOne({ "email": req.body.email })
+    console.log("Checking if the user exists")
+    if (!otherUser) {
+        return res.status(400).send("User does not exist")
+    }
+
+    if (otherUser.roles.dataCollector.includes(req.body.formName)) {
+        return res.status(400).send("User is already a project manager for this project")
+    }
+    console.log("Checking if the IDs are the same")
+
+    if (otherUser._id.toString() === req.user._id) {
+        return res.status(400).send("Please enter the email of another user")
+
+    }
+
+
+    console.log("Updating DB")
+    try {
+
+        const form = await Form.findOne(
+            {
+                "name": req.body.formName
+            })
+
+        console.log("Adding User to project")
+        const updatedProject = await Project.updateOne(
+            {
+                name: form.project
+            },
+            {
+                $addToSet: {
+                    users: otherUser._id.toString()
+                }
+            })
+
+        console.log("Adding Users to forms")
+        const updatedForms = await Form.updateOne({
+            name: req.body.formName
+        },
+            {
+                $addToSet: {
+                    users: otherUser._id.toString()
+                }
+            })
+        console.log("Adding form to user")
+
+        const updatedUser = await User.updateOne(
+            {
+                _id: otherUser._id
+            },
+            {
+                $addToSet: {
+                    "roles.analyst": req.body.formName
+                }
+            })
+        console.log(updatedUser)
+
+        return res.status(200).send(updatedUser)
+
+    } catch (err) {
+        return res.status(400).send(err)
+    }
+
 
 })
 
