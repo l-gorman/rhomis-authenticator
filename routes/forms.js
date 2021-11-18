@@ -317,6 +317,7 @@ router.post("/new", auth, async (req, res) => {
                 $push: {
                     forms: req.query.form_name,
                     "roles.dataCollector": req.query.form_name,
+                    "roles.analyst": req.query.form_name
                 }
             });
 

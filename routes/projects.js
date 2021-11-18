@@ -110,7 +110,6 @@ router.post("/create", auth, async (req, res) => {
                 $push: {
                     projects: req.body.name,
                     "roles.projectManager": req.body.name,
-                    "roles.projectAnalyst": req.body.name
                 }
             },
         );
@@ -190,7 +189,9 @@ router.delete("/delete", auth, async (req, res) => {
             {
                 $pull: {
                     forms: { $in: formsToDelete },
-                    "roles.dataCollector": { $in: formsToDelete }
+                    "roles.dataCollector": { $in: formsToDelete },
+                    "roles.analyst": { $in: formsToDelete }
+
                 }
             }
         )
@@ -203,7 +204,6 @@ router.delete("/delete", auth, async (req, res) => {
                 $pull: {
                     projects: req.body.name,
                     "roles.projectManager": req.body.name,
-                    "roles.projectAnalyst": req.body.name,
                 }
             })
 
