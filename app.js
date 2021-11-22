@@ -18,7 +18,9 @@ const authRoute = require('./routes/auth')
 const projectsRoute = require('./routes/projects')
 const formRoute = require('./routes/forms')
 const metaDataRoute = require('./routes/metaData')
+const adminRoute = require('./routes/makeAdmin').router
 
+// Make an administrator
 
 
 // Rate limiting
@@ -75,7 +77,7 @@ app.use('/api/user/', authRoute)
 app.use('/api/projects/', projectsRoute)
 app.use('/api/forms/', formRoute)
 app.use('/api/meta-data/', metaDataRoute)
-
+app.use('/api/admin/', adminRoute)
 // Using the reate limiting
 app.use("/api/user", apiLimiter);
 
@@ -84,5 +86,10 @@ app.get('/', function (req, res) {
 })
 
 app.listen(port, () => console.log('Server up and running on port ' + port))
+
+
+const initAdmin = require('./routes/makeAdmin').initAdmin
+initAdmin()
+
 
 module.exports = app; // This needs to be exported for testing

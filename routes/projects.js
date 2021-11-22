@@ -85,14 +85,14 @@ router.post("/create", auth, async (req, res) => {
         }
 
         console.log("Saving project detail onto the RHoMIS data API")
-        const projectCreateDataApi = await axios({
-            url: apiURL + "/api/meta-data/project",
-            method: "post",
-            data: projectInformation,
-            headers: {
-                'Authorization': req.header('Authorization')
-            }
-        })
+        // const projectCreateDataApi = await axios({
+        //     url: apiURL + "/api/meta-data/project",
+        //     method: "post",
+        //     data: projectInformation,
+        //     headers: {
+        //         'Authorization': req.header('Authorization')
+        //     }
+        // })
 
         // Save the new project in the database
         console.log("Saving into the main database")
@@ -111,7 +111,9 @@ router.post("/create", auth, async (req, res) => {
                     projects: req.body.name,
                     "roles.projectManager": req.body.name,
                 }
-            },
+            }, {
+            upsert: true
+        }
         );
         console.log("done")
 
@@ -219,16 +221,16 @@ router.delete("/delete", auth, async (req, res) => {
 
         // Deleting processed data
         console.log("Deleting projects from the data API")
-        const deletedProcessedData = await axios({
-            url: apiURL + "/api/delete-project",
-            method: "delete",
-            data: {
-                "projectName": req.body.name
-            },
-            headers: {
-                'Authorization': req.header('Authorization')
-            }
-        })
+        // const deletedProcessedData = await axios({
+        //     url: apiURL + "/api/delete-project",
+        //     method: "delete",
+        //     data: {
+        //         "projectName": req.body.name
+        //     },
+        //     headers: {
+        //         'Authorization': req.header('Authorization')
+        //     }
+        // })
 
         console.log("done")
         return res.send(projectToDelete)

@@ -172,14 +172,14 @@ router.post("/new-draft", auth, async (req, res) => {
             }
         )
 
-        const formDataApi = await axios({
-            url: apiURL + "/api/meta-data/form",
-            method: "post",
-            data: updated_form,
-            headers: {
-                'Authorization': req.header('Authorization')
-            }
-        })
+        // const formDataApi = await axios({
+        //     url: apiURL + "/api/meta-data/form",
+        //     method: "post",
+        //     data: updated_form,
+        //     headers: {
+        //         'Authorization': req.header('Authorization')
+        //     }
+        // })
 
         res.status(200).send("Form successfully updated")
 
@@ -370,14 +370,14 @@ router.post("/new", auth, async (req, res) => {
 
         console.log(formInformation)
 
-        const formDataApi = await axios({
-            url: apiURL + "/api/meta-data/form",
-            method: "post",
-            data: formInformation,
-            headers: {
-                'Authorization': req.header('Authorization')
-            }
-        })
+        // const formDataApi = await axios({
+        //     url: apiURL + "/api/meta-data/form",
+        //     method: "post",
+        //     data: formInformation,
+        //     headers: {
+        //         'Authorization': req.header('Authorization')
+        //     }
+        // })
 
         console.log("saving form")
         savedForm = await new Form(formInformation)

@@ -34,7 +34,7 @@ router.get("/", auth, async (req, res) => {
             forms: forms
         }
 
-        res.send(result)
+        res.status(200).send(result)
 
 
     } catch (err) {
