@@ -8,6 +8,9 @@ const Project = require('../models/Project')
 const Form = require('../models/Form')
 const User = require('../models/User')
 
+const updateAdmins = require('./makeAdmin').updateAdmins
+
+
 let config = require('config'); //we load the db location from the JSON files
 const apiURL = config.get('dataAPI.url')
 
@@ -172,14 +175,14 @@ router.post("/new-draft", auth, async (req, res) => {
             }
         )
 
-        const formDataApi = await axios({
-            url: apiURL + "/api/meta-data/form",
-            method: "post",
-            data: updated_form,
-            headers: {
-                'Authorization': req.header('Authorization')
-            }
-        })
+        // const formDataApi = await axios({
+        //     url: apiURL + "/api/meta-data/form",
+        //     method: "post",
+        //     data: updated_form,
+        //     headers: {
+        //         'Authorization': req.header('Authorization')
+        //     }
+        // })
 
         res.status(200).send("Form successfully updated")
 
@@ -317,6 +320,7 @@ router.post("/new", auth, async (req, res) => {
                 $push: {
                     forms: req.query.form_name,
                     "roles.dataCollector": req.query.form_name,
+                    "roles.analyst": req.query.form_name
                 }
             });
 
@@ -369,20 +373,20 @@ router.post("/new", auth, async (req, res) => {
 
         console.log(formInformation)
 
-        const formDataApi = await axios({
-            url: apiURL + "/api/meta-data/form",
-            method: "post",
-            data: formInformation,
-            headers: {
-                'Authorization': req.header('Authorization')
-            }
-        })
+        // const formDataApi = await axios({
+        //     url: apiURL + "/api/meta-data/form",
+        //     method: "post",
+        //     data: formInformation,
+        //     headers: {
+        //         'Authorization': req.header('Authorization')
+        //     }
+        // })
 
         console.log("saving form")
         savedForm = await new Form(formInformation)
         savedForm.save()
 
-
+        updateAdmins()
 
         res.send("Form successfully created")
 

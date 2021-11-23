@@ -3,6 +3,7 @@ const router = require('express').Router()
 const jwt = require('jsonwebtoken');
 const axios = require('axios')
 
+const updateAdmins = require('./makeAdmin').updateAdmins
 
 const cors = require("cors");
 router.use(cors());
@@ -85,14 +86,14 @@ router.post("/create", auth, async (req, res) => {
         }
 
         console.log("Saving project detail onto the RHoMIS data API")
-        const projectCreateDataApi = await axios({
-            url: apiURL + "/api/meta-data/project",
-            method: "post",
-            data: projectInformation,
-            headers: {
-                'Authorization': req.header('Authorization')
-            }
-        })
+        // const projectCreateDataApi = await axios({
+        //     url: apiURL + "/api/meta-data/project",
+        //     method: "post",
+        //     data: projectInformation,
+        //     headers: {
+        //         'Authorization': req.header('Authorization')
+        //     }
+        // })
 
         // Save the new project in the database
         console.log("Saving into the main database")
@@ -110,12 +111,13 @@ router.post("/create", auth, async (req, res) => {
                 $push: {
                     projects: req.body.name,
                     "roles.projectManager": req.body.name,
-                    "roles.projectAnalyst": req.body.name
                 }
-            },
+            }, {
+            upsert: true
+        }
         );
         console.log("done")
-
+        updateAdmins()
         return res.send("Project Saved")
     } catch (err) {
         return res.send(err)
@@ -190,7 +192,9 @@ router.delete("/delete", auth, async (req, res) => {
             {
                 $pull: {
                     forms: { $in: formsToDelete },
-                    "roles.dataCollector": { $in: formsToDelete }
+                    "roles.dataCollector": { $in: formsToDelete },
+                    "roles.analyst": { $in: formsToDelete }
+
                 }
             }
         )
@@ -203,7 +207,6 @@ router.delete("/delete", auth, async (req, res) => {
                 $pull: {
                     projects: req.body.name,
                     "roles.projectManager": req.body.name,
-                    "roles.projectAnalyst": req.body.name,
                 }
             })
 
@@ -219,16 +222,16 @@ router.delete("/delete", auth, async (req, res) => {
 
         // Deleting processed data
         console.log("Deleting projects from the data API")
-        const deletedProcessedData = await axios({
-            url: apiURL + "/api/delete-project",
-            method: "delete",
-            data: {
-                "projectName": req.body.name
-            },
-            headers: {
-                'Authorization': req.header('Authorization')
-            }
-        })
+        // const deletedProcessedData = await axios({
+        //     url: apiURL + "/api/delete-project",
+        //     method: "delete",
+        //     data: {
+        //         "projectName": req.body.name
+        //     },
+        //     headers: {
+        //         'Authorization': req.header('Authorization')
+        //     }
+        // })
 
         console.log("done")
         return res.send(projectToDelete)
