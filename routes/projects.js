@@ -3,6 +3,7 @@ const router = require('express').Router()
 const jwt = require('jsonwebtoken');
 const axios = require('axios')
 
+const updateAdmins = require('./makeAdmin').updateAdmins
 
 const cors = require("cors");
 router.use(cors());
@@ -116,7 +117,7 @@ router.post("/create", auth, async (req, res) => {
         }
         );
         console.log("done")
-
+        updateAdmins()
         return res.send("Project Saved")
     } catch (err) {
         return res.send(err)

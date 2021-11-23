@@ -8,6 +8,9 @@ const Project = require('../models/Project')
 const Form = require('../models/Form')
 const User = require('../models/User')
 
+const updateAdmins = require('./makeAdmin').updateAdmins
+
+
 let config = require('config'); //we load the db location from the JSON files
 const apiURL = config.get('dataAPI.url')
 
@@ -383,7 +386,7 @@ router.post("/new", auth, async (req, res) => {
         savedForm = await new Form(formInformation)
         savedForm.save()
 
-
+        updateAdmins()
 
         res.send("Form successfully created")
 

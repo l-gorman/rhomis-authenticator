@@ -55,7 +55,7 @@ const userSchema = new mongoose.Schema({
         type: Object,
     },
     log: {
-        type: Object
+        type: Object,
     }
 })
 
