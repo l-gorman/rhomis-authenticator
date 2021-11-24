@@ -233,6 +233,8 @@ router.delete("/delete", auth, async (req, res) => {
         //     }
         // })
 
+        updateAdmins()
+
         console.log("done")
         return res.send(projectToDelete)
 
