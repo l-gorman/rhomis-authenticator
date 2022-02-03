@@ -61,3 +61,5 @@ with:
 ). I relied on the second one the most.
 
 * Tutorials on config [found here](https://www.npmjs.com/package/config)
+
+* Note to see if automatic deployment worked 

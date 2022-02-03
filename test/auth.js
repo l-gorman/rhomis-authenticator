@@ -31,6 +31,23 @@ describe('User Registration', () => {
         nock.restore
     })
 
+
+    // Need to define the response form 
+    // the recaptcha request
+
+    let scope = nock("https://www.google.com")
+        .persist()
+        .post('/recaptcha/api/siteverify')
+        .query(true)
+        .reply(200, {
+            "testresponse": "success"
+        })
+
+    // Getting the list of users from ODK central
+
+
+
+
     // The Full test
     it('Should register a user which does not exist and save in data base', async function () {
 
@@ -39,32 +56,40 @@ describe('User Registration', () => {
         const password = "test_password"
 
 
-
-
         // Creating the fake responses from the central URL to 
         // mimic test results
 
 
-        // Conducting the actual test
+        // Registering a mock user
         const testResult = await axios({
             method: "post",
             url: "http://localhost:3002/api/user/register",
             data: {
+                "title": "Mr",
+                "firstName": "testFirstName",
+                "surname": "testSurname",
+                "captchaToken": "xyz",
                 "email": email,
                 "password": password,
             }
         })
 
-        const newUser = await User.findOne({ _id: testResult.data.userID })
 
+        const newUser = await User.findOne({ _id: testResult.data.userID })
         assert.equal(newUser.email, "user2@xyz.com");
+        assert.equal(newUser.title, "Mr");
+        assert.equal(newUser.firstName, "testFirstName");
+        assert.equal(newUser.surname, "testSurname");
         assert.equal(newUser.roles.administrator, false);
         assert.equal(newUser.roles.basic, true);
         assert.equal(newUser.roles.researcher, false);
 
         assert.equal(newUser.roles.dataCollector.length, 0);
-        assert.equal(newUser.roles.projectAnalyst.length, 0);
+        assert.equal(newUser.roles.analyst.length, 0);
         assert.equal(newUser.roles.projectManager.length, 0);
+
+        assert.equal(newUser.log[0].action, "user created")
+        assert.equal(newUser.log[0].byEmail, "user2@xyz.com")
 
 
         should.exist(newUser.projects);

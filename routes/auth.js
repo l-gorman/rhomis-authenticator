@@ -84,8 +84,6 @@ router.get("/", auth, async (req, res) => {
 
 async function verifyCaptcha(props) {
 
-    console.log(process.env.RECAPTCHA_SECRET_KEY)
-    console.log(props.captchaToken)
     try {
         // await timeout(2000)
 
@@ -100,7 +98,7 @@ async function verifyCaptcha(props) {
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             params: query_params
         })
-        console.log(response)
+
         return (response)
     } catch (err) {
         console.log(err)
@@ -126,8 +124,7 @@ router.post('/register', async (req, res) => {
 
         // Verify User with Recaptcha
         const captchaResult = await verifyCaptcha({ captchaToken: req.body.captchaToken })
-        console.log("captchaResult")
-        console.log(captchaResult)
+
 
 
         // Save the user in the database
