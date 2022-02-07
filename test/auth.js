@@ -14,27 +14,23 @@ var assert = require('assert');
 
 // Loading app information
 let User = require('../models/User')
-let index = require('../app')
 
 chai.use(chaiHttp)
-// Parent Block
+// User Registration group of tests
 describe('User Registration', () => {
-    // Specifying something to  be done before each test
-    // In this case we are cleaning up the database
+    // Before each test, delete the users in the database
     beforeEach(async function () {
         User.deleteMany({}, (err) => {
         });
     });
 
+    // After each clean the nock context
     afterEach(nock.cleanAll)
     after(function () {
         nock.restore
     })
 
-
-    // Need to define the response form 
-    // the recaptcha request
-
+    // Definining a fake response from the captcha verification process
     let scope = nock("https://www.google.com")
         .persist()
         .post('/recaptcha/api/siteverify')
@@ -43,14 +39,10 @@ describe('User Registration', () => {
             "testresponse": "success"
         })
 
-    // Getting the list of users from ODK central
 
 
-
-
-    // The Full test
+    // Testing whether we can register a user
     it('Should register a user which does not exist and save in data base', async function () {
-
         // defining email an password first
         const email = "user2@xyz.com"
         const password = "test_password"
@@ -58,7 +50,6 @@ describe('User Registration', () => {
 
         // Creating the fake responses from the central URL to 
         // mimic test results
-
 
         // Registering a mock user
         const testResult = await axios({
@@ -99,7 +90,6 @@ describe('User Registration', () => {
         should.exist(newUser.__v);
 
         await User.deleteOne({ _id: testResult.data.userID })
-
     })
 
     it('Should pick up on missing information in user registration', async function () {

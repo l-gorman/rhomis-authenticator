@@ -1,19 +1,24 @@
-name: Node.js CI
+name: Building and testing node js app
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - staging
+      - dev
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - staging
+      - dev
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [ 14.x]
+        node-version: [14.x]
         mongodb-version: [4.0]
 
     steps:
@@ -22,12 +27,12 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      
+
       - name: Start MongoDB v${{ matrix.mongodb-version }}
         uses: supercharge/mongodb-github-action@1.2.0
         with:
           mongodb-version: ${{ matrix.mongodb-version }}
-      
+
       - name: Install dependencies
         run: npm ci
       - run: npm run build --if-present
