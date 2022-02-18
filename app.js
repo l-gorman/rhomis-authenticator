@@ -1,16 +1,14 @@
 const express = require('express');
 const app = express();
-
-
+const nodemailer = require('nodemailer');
 const dotenv = require('dotenv')
 dotenv.config()
 
 const mongoose = require('mongoose')
 
-if (process.env.NODE_ENV === "production") {
-    console.log(process.env.DOCKER_MESSAGE)
+CreateTransporter = require('./email-transporter/email-transporter')
+CreateTransporter()
 
-}
 // console.log(process.env.RECAPTCHA_SECRET_KEY)
 
 // Import Routes
@@ -19,9 +17,29 @@ const projectsRoute = require('./routes/projects')
 const formRoute = require('./routes/forms')
 const metaDataRoute = require('./routes/metaData')
 const adminRoute = require('./routes/makeAdmin').router
+const testEmailRoute = require('./routes/email-test')
 
-// Make an administrator
 
+
+
+
+
+// transporter.verify(function (error, success) {
+//     if (error) {
+//         console.log("transporter error")
+//         console.log(error)
+//     } else {
+//         console.log("Server ready for messages")
+//     }
+// })
+
+// transporter.sendMail(mailOptions, function (error, info) {
+//     if (error) {
+//         return console.log(error);
+//     }
+
+//     console.log('Message sent: ' + info.response);
+// });
 
 // Rate limiting
 const rateLimit = require("express-rate-limit");
@@ -45,6 +63,7 @@ console.log('Running "' + config.util.getEnv('NODE_ENV') + '" environment')
 let dbHost = config.get('dbConfig.host')
 let port = config.get('dbConfig.port')
 
+console.log(config.get('dataAPI.url'))
 
 
 var connectWithRetry = function () {
@@ -82,6 +101,7 @@ app.use('/api/meta-data/', metaDataRoute)
 app.use('/api/admin/', adminRoute)
 // Using the reate limiting
 app.use("/api/user", apiLimiter);
+app.use("/api/email-test", testEmailRoute)
 
 app.get('/', function (req, res) {
     res.send("Welcome to RHoMIS Authenticator")

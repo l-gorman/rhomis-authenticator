@@ -4,6 +4,6 @@
         "port": 3002
     },
     "dataAPI": {
-        "url": "https://api.rhomis.cgiar.org"
+        "url": "https://api.l-gorman.com"
     }
 }

@@ -6,6 +6,7 @@
   "scripts": {
     "start-dev": "cross-env NODE_ENV=dev nodemon ./app.js",
     "start-prod": "cross-env NODE_ENV=production node ./app.js",
+    "start-staging": "cross-env NODE_ENV=staging node ./app.js",
     "start-test": "cross-env NODE_ENV=test ./node_modules/.bin/mocha --timeout 5000 --exit",
     "start-test-debug": "cross-env NODE_ENV=test DEBUG=nock.* ./node_modules/.bin/mocha --timeout 5000 --exit"
   },
@@ -21,6 +22,7 @@
   "homepage": "https://github.com/l-gorman/rhomis-authenticator#readme",
   "dependencies": {
     "@hapi/joi": "^17.1.1",
+    "@sendgrid/mail": "^7.6.1",
     "agentkeepalive": "^4.2.0",
     "ansi-regex": "^6.0.1",
     "axios": "^0.21.4",
@@ -42,6 +44,7 @@
     "mpath": "^0.8.4",
     "nanoid": "^3.2.0",
     "nodemailer": "^6.7.2",
+    "nodemailer-sendgrid": "^1.0.3",
     "nodemailer-sendgrid-transport": "^0.2.0",
     "nth-check": "^2.0.1",
     "pac-resolver": "^5.0.0",
