@@ -39,14 +39,7 @@ function CreateTransporter() {
     const transporter = nodemailer.createTransport(transport_conf)
 
     return transporter
-    // console.log(transport_conf)
-    // var mailOptions = {
-    //     from: process.env.SMTP_EMAIL, // sender address (who sends)
-    //     to: 'lg14410@bristol.ac.uk', // list of receivers (who receives)
-    //     subject: 'Hello ', // Subject line
-    //     text: 'Hello world ', // plaintext body
-    //     html: '<b>Hello world </b><br> This is the first email sent with Nodemailer in Node.js' // html body
-    // };
+
 
 
 }
