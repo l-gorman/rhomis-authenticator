@@ -22,8 +22,13 @@ router.options("*", cors());
 
 
 router.get("/", auth, async (req, res) => {
-    const userInfo = await User.findOne({ _id: req.user._id })
-    console.log(userInfo.roles)
+    const userInfo = await User.findOne({ _id: req.user._id }, { _id: 0, roles: 1 })
+    const projectInfo = await Project.findOne({ name: { $in: userInfo.projects } }, { _id: 0 })
+    console.log(projectInfo)
+    let userInfoToReturn = userInfo.roles
+    userInfo.projects = userInfo.projects
+
+
 
     res.status(200).send(userInfo.roles)
 })
