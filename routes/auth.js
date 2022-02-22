@@ -22,15 +22,21 @@ router.options("*", cors());
 
 
 router.get("/", auth, async (req, res) => {
-    const userInfo = await User.findOne({ _id: req.user._id }, { _id: 0, roles: 1 })
-    const projectInfo = await Project.findOne({ name: { $in: userInfo.projects } }, { _id: 0 })
+    const userInfo = await User.findOne({ _id: req.user._id }, { _id: 0, roles: 1, projects: 1 })
+    console.log(userInfo)
+    const projectInfo = await Project.find({ name: { $in: userInfo.projects } }, { _id: 0 })
+    const formInfo = await Form.find({ project: { $in: userInfo.projects } }, { _id: 0 })
+
     console.log(projectInfo)
     let userInfoToReturn = userInfo.roles
-    userInfo.projects = userInfo.projects
+    userInfoToReturn.projects = projectInfo
+    userInfoToReturn.forms = formInfo
 
 
 
-    res.status(200).send(userInfo.roles)
+
+
+    res.status(200).send(userInfoToReturn)
 })
 
 
