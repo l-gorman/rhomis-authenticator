@@ -76,6 +76,8 @@ router.post("/publish", auth, async (req, res) => {
 
         return res.status(200).send("Form finalized")
     } catch (err) {
+        
+        res.send(err)
 
     }
     // https://central.rhomis.cgiar.org/v1/projects/projectId/forms/xmlFormId/draft/publish
