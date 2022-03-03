@@ -37,7 +37,7 @@ router.get("/", (req, res) => {
         console.log('Message sent: ' + info.response);
     });
 
-    res.send("We will send emails from here")
+    res.status(200).send("We will send emails from here")
 })
 
 

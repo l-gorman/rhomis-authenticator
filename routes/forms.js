@@ -77,7 +77,7 @@ router.post("/publish", auth, async (req, res) => {
         return res.status(200).send("Form finalized")
     } catch (err) {
         
-        res.send(err)
+        return res.status(400).send(err)
 
     }
     // https://central.rhomis.cgiar.org/v1/projects/projectId/forms/xmlFormId/draft/publish
@@ -106,14 +106,14 @@ router.post("/new-draft", auth, async (req, res) => {
 
         console.log(previous_projects)
         if (!previous_projects) {
-            return res.send("Could not the project you are looking for in the RHoMIS db")
+            return res.status(400).send("Could not the project you are looking for in the RHoMIS db")
         }
 
         // Check if the authenticated user is actually linked to the project under question
         console.log(previous_projects.users)
         console.log(req.user._id)
 
-        if (!previous_projects.users.includes(req.user._id)) return res.send("Authenticated user does not have permissions to modify this project")
+        if (!previous_projects.users.includes(req.user._id)) return res.status(401).send("Authenticated user does not have permissions to modify this project")
 
         const project_ID = previous_projects.centralID
 
@@ -190,7 +190,7 @@ router.post("/new-draft", auth, async (req, res) => {
 
     } catch (err) {
         console.log(err)
-        res.send(err)
+        res.status(400).send(err)
     }
 
     return
@@ -222,14 +222,14 @@ router.post("/new", auth, async (req, res) => {
 
         console.log(previous_projects)
         if (!previous_projects) {
-            return res.send("Could not the project you are looking for in the RHoMIS db")
+            return res.status(400).send("Could not the project you are looking for in the RHoMIS db")
         }
 
         // Check if the authenticated user is actually linked to the project under question
         console.log(previous_projects.users)
         console.log(req.user._id)
 
-        if (!previous_projects.users.includes(req.user._id)) return res.send("Authenticated user does not have permissions to modify this project")
+        if (!previous_projects.users.includes(req.user._id)) return res.status(400).send("Authenticated user does not have permissions to modify this project")
 
         const project_ID = previous_projects.centralID
 
@@ -390,13 +390,13 @@ router.post("/new", auth, async (req, res) => {
 
         updateAdmins()
 
-        res.send("Form successfully created")
+        res.status(200).send("Form successfully created")
 
         // res.send(centralResponse.data)
 
     } catch (err) {
         console.log(err)
-        res.send(err)
+        res.status(400).send(err)
     }
 
     return

@@ -29,12 +29,18 @@ router.post("/create", auth, async (req, res) => {
     // Make sure there is a "name" argument provided in the request
     if (!req.body.name) {
         console.log("Project name not included in request")
-        return res.send("Need to include project name to create project")
+        return res.status(400).send("Need to include project name to create project")
     }
-    if (!req.body.description) {
-        console.log("Project description not included in request")
-        return res.send("Need to include project name to create project")
+
+    if (req.body.name.length===0) {
+        console.log("Project name not included in request")
+        return res.status(400).send("Need to include project name to create project")
     }
+    
+    // if (!req.body.description) {
+    //     console.log("Project description not included in request")
+    //     return res.send("Need to include project name to create project")
+    // }
 
     // Check if project exists in local mongoDb
     const projectExist = await Project.findOne({ name: req.body.name })
@@ -56,8 +62,7 @@ router.post("/create", auth, async (req, res) => {
     const projectExistsCentral = projectResultCentral.data.filter(project => project.name === req.body.name)
     if (projectExistsCentral.length > 0) {
         console.log("Project already exists in ODK central database")
-
-        return res.send("Project already exists in Central database. Please choose another project name")
+        return res.status(400).send("Project already exists in Central database. Please choose another project name")
     }
     try {
         //Create a project on Central 
@@ -118,9 +123,9 @@ router.post("/create", auth, async (req, res) => {
         );
         console.log("done")
         updateAdmins()
-        return res.send("Project Saved")
+        return res.status(200).send("Project Saved")
     } catch (err) {
-        return res.send(err)
+        return res.status(400).send(err)
     }
 })
 
@@ -236,10 +241,10 @@ router.delete("/delete", auth, async (req, res) => {
         updateAdmins()
 
         console.log("done")
-        return res.send(projectToDelete)
+        return res.status(200).send(projectToDelete)
 
     } catch (err) {
-        return res.send(err)
+        return res.status(400).send(err)
     }
 })
 

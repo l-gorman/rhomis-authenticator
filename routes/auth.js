@@ -390,10 +390,10 @@ router.delete('/delete', auth, async (req, res) => {
     try {
 
         const deletedUser = await User.findOneAndDelete({ _id: req.user._id })
-        res.send(deletedUser)
+        res.status(200).send(deletedUser)
 
     } catch (err) {
-        res.send(err)
+        res.status(400).send(err)
     }
 
 

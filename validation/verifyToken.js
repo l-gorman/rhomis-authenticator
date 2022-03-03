@@ -6,7 +6,7 @@ function auth(req, res, next) {
     // Checking if a request has a token
     const token = req.header('Authorization')
     // If token doesn't exist, give access denied
-    if (!token) return res.status(401).send('Access Denied');
+    if (!token) return res.status(401).send('Access Denied No token provided');
     const currentDate = new Date()
 
     try {
@@ -24,7 +24,7 @@ function auth(req, res, next) {
         next();
 
     } catch (err) {
-        res.status(401).send('Invalid Token')
+        return res.status(401).send('Invalid Token')
     }
 }
 
