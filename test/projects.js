@@ -23,7 +23,7 @@ describe("Project management", () => {
     testProjectName = "test_project_name"
     testProjectDescription = "a slightly longer test description"
 
-    let scope = nock('https://' + process.env.CENTRAL_URL)
+    let scope = nock(process.env.CENTRAL_URL)
         // Obtaining central authentication token
         .post('/v1/sessions', {
             email: process.env.CENTRAL_EMAIL,

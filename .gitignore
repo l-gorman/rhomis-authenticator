@@ -4,6 +4,7 @@ test-script.js
 
 data/
 .vscode/
+*.code-workspace
 
 survey_modules/
 

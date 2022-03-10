@@ -52,7 +52,7 @@ router.post("/create", auth, async (req, res) => {
     // Check if project exists in ODK central
     console.log("Finding previous projects on ODK central")
     const projectResultCentral = await axios({
-        url: 'https://' + process.env.CENTRAL_URL + "/v1/projects",
+        url: process.env.CENTRAL_URL + "/v1/projects",
         method: "get",
         headers: {
             'Authorization': 'Bearer ' + central_token
@@ -68,7 +68,7 @@ router.post("/create", auth, async (req, res) => {
         //Create a project on Central 
         console.log("Creating the project on ODK central")
         const projectCreationResult = await axios({
-            url: 'https://' + process.env.CENTRAL_URL + "/v1/projects",
+            url: process.env.CENTRAL_URL + "/v1/projects",
             method: "post",
             data: {
                 name: req.body.name
@@ -153,7 +153,7 @@ router.delete("/delete", auth, async (req, res) => {
     // Check for project in ODK central
     console.log("Checking for project in ODK central")
     const centralProjects = await axios({
-        url: 'https://' + process.env.CENTRAL_URL + "/v1/projects",
+        url: process.env.CENTRAL_URL + "/v1/projects",
         method: "get",
         headers: {
             'Authorization': 'Bearer ' + central_token
@@ -177,7 +177,7 @@ router.delete("/delete", auth, async (req, res) => {
         // Delete the project on central
         console.log("Deleting the project on ODK central")
         const centralDeleteResult = await axios({
-            url: 'https://' + process.env.CENTRAL_URL + "/v1/projects/" + centralID,
+            url: process.env.CENTRAL_URL + "/v1/projects/" + centralID,
             method: "delete",
             headers: {
                 'Authorization': 'Bearer ' + central_token
