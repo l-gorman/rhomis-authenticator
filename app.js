@@ -1,10 +1,27 @@
 const express = require('express');
 const app = express();
 const nodemailer = require('nodemailer');
-const dotenv = require('dotenv')
-dotenv.config()
-
 const mongoose = require('mongoose')
+
+const dotenv = require('dotenv')
+
+
+function getEnvFile(nodeEnv){
+    if (process.env.NODE_ENV==="test"){
+        return ".env.test"
+    }else{
+        return ".env"
+    }
+}
+
+var envFile = getEnvFile(process.env.NODE_ENV)
+console.log("env file")
+console.log(envFile)
+console.log(process.env.NODE_ENV)
+
+
+dotenv.config({path: envFile})
+
 
 
 
