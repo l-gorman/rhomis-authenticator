@@ -18,13 +18,14 @@ function auth(req, res, next) {
         // Checking whether or not the token has expired
         console.log(expiry < currentDate)
         if (expiry < currentDate) {
-            throw 'Token has expired'
+            throw new Error('Token has expired')
         }
         req.user = verified
         next();
 
     } catch (err) {
-        return res.status(401).send('Invalid Token')
+
+        return res.status(401).send(err.message)
     }
 }
 
