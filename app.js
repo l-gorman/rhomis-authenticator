@@ -6,10 +6,10 @@ const mongoose = require('mongoose')
 const dotenv = require('dotenv')
 
 
-function getEnvFile(nodeEnv){
-    if (process.env.NODE_ENV==="test"){
+function getEnvFile(nodeEnv) {
+    if (process.env.NODE_ENV === "test") {
         return ".env.test"
-    }else{
+    } else {
         return ".env"
     }
 }
@@ -20,7 +20,7 @@ console.log(envFile)
 console.log(process.env.NODE_ENV)
 
 
-dotenv.config({path: envFile})
+dotenv.config({ path: envFile })
 
 
 
@@ -34,7 +34,7 @@ const formRoute = require('./routes/forms')
 const metaDataRoute = require('./routes/metaData')
 const adminRoute = require('./routes/makeAdmin').router
 const testEmailRoute = require('./routes/email-test')
-
+const odkChoicesRoute = require('./routes/odkChoices')
 
 // Rate limiting
 const rateLimit = require("express-rate-limit");
@@ -97,6 +97,7 @@ app.use('/api/admin/', adminRoute)
 // Using the reate limiting
 app.use("/api/user", apiLimiter);
 app.use("/api/email-test", testEmailRoute)
+app.use("/api/odk-choices/", odkChoicesRoute)
 
 app.get('/', function (req, res) {
     res.send("Welcome to RHoMIS Authenticator")
