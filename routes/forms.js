@@ -77,6 +77,8 @@ router.post("/publish", auth, async (req, res) => {
         return res.status(200).send("Form finalized")
     } catch (err) {
 
+        return res.status(400).send("Unable to finalize form")
+
     }
     // https://central.rhomis.cgiar.org/v1/projects/projectId/forms/xmlFormId/draft/publish
 
