@@ -9,6 +9,8 @@ const User = require('../models/User')
 const Form = require('../models/Form')
 const Project = require('../models/Project')
 
+const getCentralAuthToken = require('./centralAuth')
+
 const cors = require("cors");
 router.use(cors());
 router.options("*", cors());
@@ -25,7 +27,23 @@ router.get("/", auth, async (req, res) => {
 
         const projects = await Project.find({ users: req.user._id })
         // const projects = await Project.find({})
-        const forms = await Form.find({ users: req.user._id })
+        const forms_found = await Form.find({ users: req.user._id })
+
+        let forms = JSON.parse(JSON.stringify(forms_found))
+
+        for (let form_index = 0; form_index < forms.length; form_index++) {
+
+            forms[form_index].submissions = await getSubmissionCounts({
+                projectName: forms[form_index].project,
+                formName: forms[form_index].name,
+
+            })
+
+        }
+
+        console.log(forms)
+
+
         // const forms = await Form.find({})
 
         const result = {
@@ -41,6 +59,52 @@ router.get("/", auth, async (req, res) => {
         res.status(400).send(err)
     }
 })
+
+
+async function getSubmissionCounts(props) {
+    const project = await Project.findOne({ "name": props.projectName })
+    const form = await Form.findOne({ "project": props.projectName, "name": props.formName })
+
+
+    const url = BuildSubmissionURL({
+        form: form,
+        project: project
+    })
+    console.log(url)
+
+
+    const token = await getCentralAuthToken()
+    const centralResponse = await axios({
+        method: "get",
+        url: url,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
+    })
+        .catch(function (error) {
+            console.log(error)
+            throw error
+        })
+
+
+    const number_of_submissions = centralResponse.data.length
+
+    return number_of_submissions
+
+}
+
+function BuildSubmissionURL(props) {
+
+
+    if (props.form.draft === false) {
+        return "https://" + process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/submissions'
+    }
+
+    if (props.form.draft = true) {
+        return "https://" + process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/draft/submissions'
+    }
+}
 
 module.exports = router
 
