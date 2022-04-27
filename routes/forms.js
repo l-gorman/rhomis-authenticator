@@ -77,7 +77,8 @@ router.post("/publish", auth, async (req, res) => {
         return res.status(200).send("Form finalized")
     } catch (err) {
 
-        return res.status(400).send(err)
+        return res.status(400).send("Unable to finalize form")
+
 
     }
     //process.env.CENTRAL_URL +  /v1/projects/projectId/forms/xmlFormId/draft/publish

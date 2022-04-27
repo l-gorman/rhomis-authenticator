@@ -166,8 +166,10 @@ router.post('/update', auth, async (req, res) => {
 
 router.post('/project-manager', auth, async (req, res) => {
     console.log("Finding the user")
-
+    console.log(req.body)
     const otherUser = await User.findOne({ "email": req.body.email })
+    console.log(otherUser)
+
     console.log("Checking if the user exists")
     if (!otherUser) {
         return res.status(400).send("User does not exist")
@@ -251,7 +253,7 @@ router.post('/data-collector', auth, async (req, res) => {
     }
 
     if (otherUser.roles.dataCollector.includes(req.body.formName)) {
-        return res.status(400).send("User is already a project manager for this project")
+        return res.status(400).send("User is already a data collector for this project")
     }
     console.log("Checking if the IDs are the same")
 
@@ -319,8 +321,8 @@ router.post('/analyst', auth, async (req, res) => {
         return res.status(400).send("User does not exist")
     }
 
-    if (otherUser.roles.dataCollector.includes(req.body.formName)) {
-        return res.status(400).send("User is already a project manager for this project")
+    if (otherUser.roles.analyst.includes(req.body.formName)) {
+        return res.status(400).send("User is already an analyst for this project")
     }
     console.log("Checking if the IDs are the same")
 
