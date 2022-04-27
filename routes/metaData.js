@@ -16,7 +16,7 @@ router.use(cors());
 router.options("*", cors());
 
 
-router.get("/", auth, async (req, res) => {
+router.post("/", auth, async (req, res) => {
     // write file then read it
     //const writeStatus = await writeToFile(req, res)
     //const data = await readFile("./survey_modules/node_output.xlsx")
@@ -31,17 +31,20 @@ router.get("/", auth, async (req, res) => {
 
         let forms = JSON.parse(JSON.stringify(forms_found))
 
-        for (let form_index = 0; form_index < forms.length; form_index++) {
+        console.log("get submission count")
+        console.log(req.body)
+        if (req.body.getSubmissionCount === true) {
 
-            forms[form_index].submissions = await getSubmissionCounts({
-                projectName: forms[form_index].project,
-                formName: forms[form_index].name,
+            for (let form_index = 0; form_index < forms.length; form_index++) {
 
-            })
+                forms[form_index].submissions = await getSubmissionCounts({
+                    projectName: forms[form_index].project,
+                    formName: forms[form_index].name,
+                })
 
+            }
         }
 
-        console.log(forms)
 
 
         // const forms = await Form.find({})
