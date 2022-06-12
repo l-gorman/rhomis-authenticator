@@ -50,7 +50,7 @@ router.post("/publish", auth, async (req, res) => {
         console.log("making central request")
         const centralResponse = await axios({
             method: "post",
-            url: "https://"+process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish',
+            url: "https://"+process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish?version=' + previous_forms.formVersion,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -94,9 +94,8 @@ router.post("/new-draft", auth, async (req, res) => {
     console.log("form_version: " + req.query.form_version)
     try {
         if (req.query.project_name === undefined |
-            req.query.form_name === undefined |
-            req.query.form_version === undefined |
-            req.query.publish === undefined) {
+            req.query.form_name === undefined
+            ) {
             return res.status(400).send("Missing information in request")
         }
 
@@ -150,6 +149,8 @@ router.post("/new-draft", auth, async (req, res) => {
 
 
         // Update forms collection
+        // By default, increment the existing form version by one for each new draft:
+        const formVersion = req.query.form_version ?? Number(previous_forms.formVersion) + 1
 
 
         const project = await Project.findOne(
@@ -172,9 +173,9 @@ router.post("/new-draft", auth, async (req, res) => {
 
         console.log("saving form")
         const updated_form = await Form.updateOne(
-            { name: "", project: "" },
+            { name: req.query.form_name, project: req.query.project_name },
             {
-                formVersion: req.query.form_version
+                formVersion: formVersion
             }
         )
 
@@ -210,9 +211,7 @@ router.post("/new", auth, async (req, res) => {
     console.log("form_version: " + req.query.form_version)
     try {
         if (req.query.project_name === undefined |
-            req.query.form_name === undefined |
-            req.query.form_version === undefined |
-            req.query.publish === undefined) {
+            req.query.form_name === undefined) {
             return res.status(400).send("Missing information in request")
         }
 
@@ -240,6 +239,9 @@ router.post("/new", auth, async (req, res) => {
             res.status(400).send("There is already a form with this name in the database")
         }
 
+        // Set defaults for optional query params:
+        const formVersion = req.query.form_version ?? 1
+        const publish = req.query.publish ?? "false"
 
         // Authenticate on ODK central
         const token = await getCentralToken()
@@ -338,16 +340,10 @@ router.post("/new", auth, async (req, res) => {
             console.log("could not find centralID of project you are looking for")
         }
 
-        let publish = false
-
-        if (req.query.publish === "true") {
-            publish = true
-        }
-
         const formInformation = {
             name: req.query.form_name,
             project: req.query.project_name,
-            formVersion: req.query.form_version,
+            formVersion: formVersion,
             users: [req.user._id],
             centralID: centralResponse.data.xmlFormId,
             draft: !publish,
