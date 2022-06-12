@@ -51,7 +51,7 @@ router.post("/publish", auth, async (req, res, next) => {
         const centralResponse = await axios({
             method: "post",
             //process.env.CENTRAL_URL +  /v1/projects/projectId/forms/xmlFormId/draft/publish?version=formversion
-            url: "https://" + process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish?version=' + form.formVersion,
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish?version=' + form.formVersion,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -124,7 +124,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
         // Send form to ODK central
         const centralResponse = await axios({
             method: "post",
-            url: "https://"+process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft?ignoreWarnings=true',
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft?ignoreWarnings=true',
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'X-XlsForm-FormId-Fallback': req.query.form_name,
@@ -205,7 +205,7 @@ router.post("/new", auth, async (req, res) => {
         // Send form to ODK central
         const centralResponse = await axios({
             method: "post",
-            url: "https://" + process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms?ignoreWarnings=true&publish=' + publish,
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms?ignoreWarnings=true&publish=' + publish,
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'X-XlsForm-FormId-Fallback': req.query.form_name,
@@ -224,7 +224,7 @@ router.post("/new", auth, async (req, res) => {
         const appUserName = "data-collector-" + req.query.form_name
         const appUserCreation = await axios({
             method: "post",
-            url: "https://" + process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/app-users',
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/app-users',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -241,7 +241,7 @@ router.post("/new", auth, async (req, res) => {
         const formID = req.query.form_name
         const appRoleAssignment = await axios({
             method: "post",
-            url: "https://" + process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/assignments/' + roleID + '/' + appUserCreation.data.id,
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/assignments/' + roleID + '/' + appUserCreation.data.id,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -253,7 +253,7 @@ router.post("/new", auth, async (req, res) => {
 
         const draftDetails = await axios({
             method: "get",
-            url: "https://" + process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + "/draft",
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + "/draft",
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -303,7 +303,7 @@ router.post("/new", auth, async (req, res) => {
             complete: false,
             collectionDetails: {
                 general: {
-                    server_url: "https://" + process.env.CENTRAL_URL + "/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID,
+                    server_url: process.env.CENTRAL_URL + "/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID,
                     form_update_mode: "match_exactly",
                     autosend: "wifi_and_cellular"
                 },
@@ -311,7 +311,7 @@ router.post("/new", auth, async (req, res) => {
             },
             draftCollectionDetails: {
                 general: {
-                    server_url: "https://" + process.env.CENTRAL_URL + "/v1/test/" + draftDetails.data.draftToken + "/projects/" + project.centralID + "/forms/" + req.query.form_name + "/draft",
+                    server_url: process.env.CENTRAL_URL + "/v1/test/" + draftDetails.data.draftToken + "/projects/" + project.centralID + "/forms/" + req.query.form_name + "/draft",
                     form_update_mode: "match_exactly",
                     autosend: "wifi_and_cellular"
                 },

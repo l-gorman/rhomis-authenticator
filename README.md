@@ -20,15 +20,12 @@ This can be done by running the command:
 `npm install`
 
 In the main directory (where you find the `routes`, `models`, `test`, and `config` directories)
-you will need to create a `.env` file. This file will need to include the 'token secret'. In your `.env` 
-include: 
-
-`TOKEN_SECRET=mysupersecuresecret`
+you will need to create a `.env` file. Copy the `.env.example` and add the values for the given variables.
 
 Note, that if you want to write any application which relies on this authentication API, you will need to
 ensure that it uses the same secret to decode web tokens.
 
-## Running the aplication
+## Running the application
 
 There are seperate configuration files for production, development, and testing. This can be found in the `./config` folder. The "scripts" object in the `package.json` file has been modified to include scripts for running the production environment, the development environment, and the testing environment:
 
