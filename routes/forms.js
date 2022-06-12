@@ -1,7 +1,6 @@
 const router = require('express').Router()
 const fs = require('fs')
 const axios = require('axios')
-const semver = require('semver')
 
 const auth = require('../validation/verifyToken')
 
@@ -24,7 +23,7 @@ const getCentralToken = require('./centralAuth')
 const { param } = require('./auth')
 
 /**
- * Publishes new 'live' version from the current draft of a
+ * Publishes new 'live' version from the current draft of a form.
  * @queryParam project_name 
  * @queryParam form_name
  * @response 200 "Form finalized"
@@ -35,23 +34,23 @@ router.post("/publish", auth, async (req, res, next) => {
     // https://expressjs.com/en/guide/error-handling.html#catching-errors
     try {
 
-        console.log("finalizing form")
-        // Authenticate on ODK central
-        const token = await getCentralToken()
+        // ******************** VALIDATE REQUEST ******************** //
         const validatedReq = validateRequestQuery(req, ['project_name', 'form_name'])
 
         const project = await Project.findOne({ name: req.query.project_name })
-        if (!project) throw new HttpError("Project does not exist in RHoMIS db")
+        if (!project) throw new HttpError("Project does not exist in RHoMIS db", 400)
 
         const project_ID = project.centralID
 
         const form = await Form.findOne({ name: req.query.form_name })
-        if (!form) throw new HttpError("Form does not exist in RHoMIS db")
+        if (!form) throw new HttpError("Form does not exist in RHoMIS db", 400)
 
-
+        // Authenticate on ODK central
+        const token = await getCentralToken()
 
         const centralResponse = await axios({
             method: "post",
+            //process.env.CENTRAL_URL +  /v1/projects/projectId/forms/xmlFormId/draft/publish?version=formversion
             url: "https://" + process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish?version=' + form.formVersion,
             headers: {
                 'Content-Type': 'application/json',
@@ -79,16 +78,13 @@ router.post("/publish", auth, async (req, res, next) => {
     } catch (err) {
         next(err)
     }
-    //process.env.CENTRAL_URL +  /v1/projects/projectId/forms/xmlFormId/draft/publish
-
-
 })
 
 /**
- * Creates a new draft from a given xls file
+ * Creates a new draft from a given xls file. Request body must be the XLS/XLSX form file as a binary file.
  * @queryParam project_name
  * @queryParam form_name
- * @queryParam publish - boolean
+ * @queryParam form_version (optional - defaults to current form.formVersion + 1)
  */
 router.post("/new-draft", auth, async (req, res, next) => {
     console.log("user: " + req.user._id)
@@ -155,7 +151,6 @@ router.post("/new-draft", auth, async (req, res, next) => {
                 formVersion: formVersion
             }
         )
-        console.log(formUpdate)
 
         if (formUpdate.nModified !== 1) throw new HttpError("Form is sent to ODK Central, but could not update formVersion in RHoMIS database", 500)
         
@@ -411,10 +406,7 @@ async function readFile(path) {
     return data
 }
 
-async function authoriseProjectEdit(user, project) {
-    return !project.users.includes(user._id)
-}
-
+// Check that req.query includes all of the given query parameters
 async function validateRequestQuery(req, query_params) {    
     query_params.forEach(item => {
         if (req.query[item] === undefined) throw new HttpError("Request query must include " + item, 400)
