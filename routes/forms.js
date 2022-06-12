@@ -188,7 +188,7 @@ router.post("/new", auth, async (req, res, next) => {
         const project = await Project.findOne({ name: req.query.project_name })
         if (!project) throw new HttpError("Could not find project with this name", 400)
         
-        if (!project.users.includes(req.user._id)) throw new HttpError("Authenticated user does not have permissions to modify this project", 400)
+        if (!project.users.includes(req.user._id)) throw new HttpError("Authenticated user does not have permissions to modify this project", 401)
 
 
         // Check if form exists

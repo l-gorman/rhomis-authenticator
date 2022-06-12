@@ -1,5 +1,7 @@
+# WIP list of active endpoints
+
 # /
-- return Welcome message
+- return Welcome message / check if the app is active
 
 - **/api/user (Auth.js)**
   - GET /: Gets lots of info on "current" user (based on user passed in request)
@@ -19,17 +21,13 @@
   - POST /publish: Finalise a form
   - POST /new-draft: Update the draft on ODK central for a form
   - POST /new: Create a new form on ODK central;
-- **/api/metadata (metaData.js)**
+- **/api/meta-data (metaData.js)**
   - POST /: Get lots of info on "current" user (based on user passed in request)
 - **/api/admin (makeAdmin.js)**
   - POST /: Make a user an admin
 
 
-## Questions
-- can GET from api/user be merged with POST from /api/meta-data? 
+## Questions / possible streamlining for later
+- can GET from api/user be merged with POST from /api/meta-data? (If we only keep one, I think it makes sense long-term to keep the GET api/user, as it is a bit more intuitive than the separate meta-data endpoint.)
 - How does admin or project lead get info on a different user? 
-
-## NOTES
-
-- should make api handle the formVersion
-- could add HTTPERrror ?? 
+- Maybe unify some of the language (e.g. 'new' vs 'create').
