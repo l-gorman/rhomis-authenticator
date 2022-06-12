@@ -45,6 +45,7 @@ router.post("/publish", auth, async (req, res, next) => {
         const form = await Form.findOne({ name: req.query.form_name })
         if (!form) throw new HttpError("Form does not exist in RHoMIS db", 400)
 
+        // ******************** SEND TO ODK CENTRAL ******************** //
         // Authenticate on ODK central
         const token = await getCentralToken()
 
@@ -61,6 +62,8 @@ router.post("/publish", auth, async (req, res, next) => {
                 throw error
             })
 
+
+        // ******************** UPDATE RHOMIS DB ******************** //
         const updated_form = await Form.updateOne(
             {
                 name: req.query.form_name,
@@ -139,7 +142,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
 
 
 
-        // ******************** Update form in DB ******************** //
+        // ******************** UPDATE RHOMIS DB ******************** //
 
         console.log("saving form")
         const formUpdate = await Form.updateOne(
@@ -168,7 +171,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
  * @queryParam publish (optional - defaults to FALSE)
  * @queryParam form_vesrion (optional - defaults to 1)
  */
-router.post("/new", auth, async (req, res) => {
+router.post("/new", auth, async (req, res, next) => {
 
     console.log("user: " + req.user._id)
     console.log("project_name: " + req.query.project_name)
@@ -176,7 +179,8 @@ router.post("/new", auth, async (req, res) => {
     console.log("publish: " + req.query.publish)
     console.log("form_version: " + req.query.form_version)
     try {
-
+            
+        throw new HttpError('test')
         // ******************** VALIDATE REQUEST ******************** //
         validateRequestQuery(req, ['project_name', 'form_name'])
 
@@ -192,7 +196,7 @@ router.post("/new", auth, async (req, res) => {
         if (form) throw new HttpError("There is already a form with this name in the database", 400)
 
         
-        // ******************** PREPARE DATA AND SEND ******************** //
+        // ******************** PREPARE DATA AND SEND TO ODK CENTRAL ******************** //
         const project_ID = project.centralID
         const publish = req.query.publish ?? 'false'
         const formVersion = req.query.formVersion ?? 1
@@ -264,6 +268,7 @@ router.post("/new", auth, async (req, res) => {
             })
 
 
+        // ******************** UPDATE RHOMIS DB ******************** //
 
         // Add form to projects collection
         const updated_project = await Project.updateOne(
@@ -346,7 +351,7 @@ router.post("/new", auth, async (req, res) => {
 
     } catch (err) {
         console.log(err)
-        res.status(400).send(err)
+        next(err)
     }
 
     return
@@ -408,9 +413,12 @@ async function readFile(path) {
 
 // Check that req.query includes all of the given query parameters
 async function validateRequestQuery(req, query_params) {    
+    missing = []
     query_params.forEach(item => {
-        if (req.query[item] === undefined) throw new HttpError("Request query must include " + item, 400)
+        if (req.query[item] === undefined) missing.push(item)
     });
+
+    if (missing.length > 0) throw new HttpError("Request query must include the following: " + missing.join(','), 400)
 
     return req
 }
