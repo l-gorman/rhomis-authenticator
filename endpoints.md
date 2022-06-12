@@ -29,3 +29,7 @@
 - can GET from api/user be merged with POST from /api/meta-data? 
 - How does admin or project lead get info on a different user? 
 
+## NOTES
+
+- should make api handle the formVersion
+- could add HTTPERrror ?? 

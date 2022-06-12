@@ -61,9 +61,6 @@ router.post("/publish", auth, async (req, res, next) => {
             .catch(function (error) {
                 throw error
             })
-        // console.log("centralResponse")
-
-        // console.log(centralResponse)
 
         const updated_form = await Form.updateOne(
             {
@@ -101,26 +98,23 @@ router.post("/new-draft", auth, async (req, res, next) => {
     try {
 
         // ******************** VALIDATE REQUEST ******************** //
-        //check query has all required params
+        //check query has all required params 
         validateRequestQuery(req, ['project_name','form_name'])
 
         // Find the project and form
-        const project = await Project.findOne({ name: project_name })
-        console.log('project', project)
+        const project = await Project.findOne({ name: req.query.project_name })
         if (!project) throw new HttpError("Could not find project", 400)
     
         // Check if the authenticated user is actually linked to the project under question
         if (!project.users.includes(req.user._id)) throw new HttpError("Authenticated user does not have permissions to modify this project", 401)
 
-        
-
         // Check if form exists
-        const form = await Form.findOne({ name: form_name, project: project_name })
+        const form = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
         if (!form) throw new HttpError("Cannot find form to update", 400)
 
         // If form version doesn't exist in query, increment the existing form_version
-        const formVersion = req.query.form_version ?? form.formVersion + 1
-    
+        const formVersion = req.query.form_version ?? Number(form.formVersion) + 1
+        
 
         // ******************** SEND FORM TO ODK CENTRAL ******************** //
         // Authenticate on ODK central
@@ -149,65 +143,64 @@ router.post("/new-draft", auth, async (req, res, next) => {
 
 
 
-        // ******************** Update form ******************** //
+        // ******************** Update form in DB ******************** //
 
         console.log("saving form")
-        form.formVersion = new_form_version
-        form = form.save()
+        const formUpdate = await Form.updateOne(
+            { 
+                name: req.query.form_name, 
+                project: req.query.project_name 
+            },
+            {
+                formVersion: formVersion
+            }
+        )
+        console.log(formUpdate)
+
+        if (formUpdate.nModified !== 1) throw new HttpError("Form is sent to ODK Central, but could not update formVersion in RHoMIS database", 500)
         
         res.status(200).send("Form successfully updated")
 
     } catch (err) {
         next(err)
     }
-
-    return
 })
 
 
-
+/**
+ * @queryParam project_name
+ * @queryParam form_name
+ * @queryParam publish (optional - defaults to FALSE)
+ * @queryParam form_vesrion (optional - defaults to 1)
+ */
 router.post("/new", auth, async (req, res) => {
-    // write file then read it
-    //const writeStatus = await writeToFile(req, res)
-    //const data = await readFile("./survey_modules/node_output.xlsx")
+
     console.log("user: " + req.user._id)
     console.log("project_name: " + req.query.project_name)
     console.log("form_name: " + req.query.form_name)
     console.log("publish: " + req.query.publish)
     console.log("form_version: " + req.query.form_version)
     try {
-        if (req.query.project_name === undefined |
-            req.query.form_name === undefined |
-            req.query.form_version === undefined |
-            req.query.publish === undefined) {
-            return res.status(400).send("Missing information in request")
-        }
+
+        // ******************** VALIDATE REQUEST ******************** //
+        validateRequestQuery(req, ['project_name', 'form_name'])
 
         // Check which project we are looking for
+        const project = await Project.findOne({ name: req.query.project_name })
+        if (!project) throw new HttpError("Could not find project with this name", 400)
+        
+        if (!project.users.includes(req.user._id)) throw new HttpError("Authenticated user does not have permissions to modify this project", 400)
 
-        const previous_projects = await Project.findOne({ name: req.query.project_name })
-        console.log("previous_projects")
-
-        console.log(previous_projects)
-        if (!previous_projects) {
-            return res.status(400).send("Could not the project you are looking for in the RHoMIS db")
-        }
-
-        // Check if the authenticated user is actually linked to the project under question
-        console.log(previous_projects.users)
-        console.log(req.user._id)
-
-        if (!previous_projects.users.includes(req.user._id)) return res.status(400).send("Authenticated user does not have permissions to modify this project")
-
-        const project_ID = previous_projects.centralID
 
         // Check if form exists
-        const previous_forms = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
-        if (previous_forms) {
-            res.status(400).send("There is already a form with this name in the database")
-        }
+        const form = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
+        if (form) throw new HttpError("There is already a form with this name in the database", 400)
 
-
+        
+        // ******************** PREPARE DATA AND SEND ******************** //
+        const project_ID = project.centralID
+        const publish = req.query.publish ?? 'false'
+        const formVersion = req.query.formVersion ?? 1
         // Authenticate on ODK central
         const token = await getCentralToken()
 
@@ -217,7 +210,7 @@ router.post("/new", auth, async (req, res) => {
         // Send form to ODK central
         const centralResponse = await axios({
             method: "post",
-            url: "https://" + process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms?ignoreWarnings=true&publish=' + req.query.publish,
+            url: "https://" + process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms?ignoreWarnings=true&publish=' + publish,
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'X-XlsForm-FormId-Fallback': req.query.form_name,
@@ -230,7 +223,7 @@ router.post("/new", auth, async (req, res) => {
             })
 
 
-        // Add an app user and assign to project
+        // *****************  Add an app user and assign to project *****************
         // https://private-709900-odkcentral.apiary-mock.com/v1/projects/projectId/app-users
 
         const appUserName = "data-collector-" + req.query.form_name
@@ -298,23 +291,17 @@ router.post("/new", auth, async (req, res) => {
         console.log(req.query.project_name)
         console.log(centralResponse.data)
 
-        const project = await Project.findOne(
-            { name: req.query.project_name }
-        )
-        if (project.centralID === undefined) {
-            console.log("could not find centralID of project you are looking for")
-        }
-
-        let publish = false
-
-        if (req.query.publish === "true") {
-            publish = true
-        }
+        // const project = await Project.findOne(
+        //     { name: req.query.project_name }
+        // )
+        // if (project.centralID === undefined) {
+        //     console.log("could not find centralID of project you are looking for")
+        // }
 
         const formInformation = {
             name: req.query.form_name,
             project: req.query.project_name,
-            formVersion: req.query.form_version,
+            formVersion: formVersion,
             users: [req.user._id],
             centralID: centralResponse.data.xmlFormId,
             draft: !publish,
@@ -429,9 +416,10 @@ async function authoriseProjectEdit(user, project) {
 }
 
 async function validateRequestQuery(req, query_params) {    
-    for (param in query_params) {
-        if(req.query[param] === undefined) throw new HttpError("Request query must include " + param, 400)
-    }
+    query_params.forEach(item => {
+        if (req.query[item] === undefined) throw new HttpError("Request query must include " + item, 400)
+    });
+
     return req
 }
 
