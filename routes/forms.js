@@ -26,7 +26,6 @@ const { param } = require('./auth')
  * Publishes new 'live' version from the current draft of a form.
  * @queryParam project_name 
  * @queryParam form_name
- * @response 200 "Form finalized"
  */
 router.post("/publish", auth, async (req, res, next) => {
 
@@ -84,7 +83,7 @@ router.post("/publish", auth, async (req, res, next) => {
 })
 
 /**
- * Creates a new draft from a given xls file. Request body must be the XLS/XLSX form file as a binary file.
+ * Creates a new draft from a given XLS file. Request body must be the XLS/XLSX form file as a binary file.
  * @queryParam project_name
  * @queryParam form_name
  * @queryParam form_version (optional - defaults to current form.formVersion + 1)
@@ -166,8 +165,9 @@ router.post("/new-draft", auth, async (req, res, next) => {
 
 
 /**
+ * Creates an entirely new form from a given XLS file. The request body must be the XLS/XLSX form file as a binary file.
  * @queryParam project_name
- * @queryParam form_name
+ * @queryParam form_name (must be unique within the project, and must match the form_id inside the given XLS file)
  * @queryParam publish (optional - defaults to FALSE)
  * @queryParam form_vesrion (optional - defaults to 1)
  */
