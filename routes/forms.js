@@ -50,7 +50,6 @@ router.post("/publish", auth, async (req, res, next) => {
 
         const centralResponse = await axios({
             method: "post",
-            //process.env.CENTRAL_URL +  /v1/projects/projectId/forms/xmlFormId/draft/publish?version=formversion
             url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish?version=' + form.formVersion,
             headers: {
                 'Content-Type': 'application/json',
@@ -94,6 +93,14 @@ router.post("/new-draft", auth, async (req, res, next) => {
     console.log("form_name: " + req.query.form_name)
     console.log("form_version: " + req.query.form_version)
     try {
+<<<<<<< HEAD
+=======
+        if (req.query.project_name === undefined |
+            req.query.form_name === undefined
+            ) {
+            return res.status(400).send("Missing information in request")
+        }
+>>>>>>> staging
 
         // ******************** VALIDATE REQUEST ******************** //
         //check query has all required params 
@@ -141,6 +148,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
 
 
 
+<<<<<<< HEAD
         // ******************** UPDATE RHOMIS DB ******************** //
 
         console.log("saving form")
@@ -149,6 +157,35 @@ router.post("/new-draft", auth, async (req, res, next) => {
                 name: req.query.form_name, 
                 project: req.query.project_name 
             },
+=======
+
+        // Update forms collection
+        // By default, increment the existing form version by one for each new draft:
+        const formVersion = req.query.form_version ?? Number(previous_forms.formVersion) + 1
+
+
+        const project = await Project.findOne(
+            { name: req.query.project_name }
+        )
+        if (project.centralID === undefined) {
+            console.log("could not find centralID of project you are looking for")
+        }
+
+        let publish = false
+
+        if (req.query.publish === "true") {
+            publish = true
+        }
+
+
+
+
+
+
+        console.log("saving form")
+        const updated_form = await Form.updateOne(
+            { name: req.query.form_name, project: req.query.project_name },
+>>>>>>> staging
             {
                 formVersion: formVersion
             }
@@ -179,10 +216,17 @@ router.post("/new", auth, async (req, res, next) => {
     console.log("publish: " + req.query.publish)
     console.log("form_version: " + req.query.form_version)
     try {
+<<<<<<< HEAD
             
         throw new HttpError('test')
         // ******************** VALIDATE REQUEST ******************** //
         validateRequestQuery(req, ['project_name', 'form_name'])
+=======
+        if (req.query.project_name === undefined |
+            req.query.form_name === undefined) {
+            return res.status(400).send("Missing information in request")
+        }
+>>>>>>> staging
 
         // Check which project we are looking for
         const project = await Project.findOne({ name: req.query.project_name })
@@ -192,8 +236,19 @@ router.post("/new", auth, async (req, res, next) => {
 
 
         // Check if form exists
+<<<<<<< HEAD
         const form = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
         if (form) throw new HttpError("There is already a form with this name in the database", 400)
+=======
+        const previous_forms = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
+        if (previous_forms) {
+            res.status(400).send("There is already a form with this name in the database")
+        }
+
+        // Set defaults for optional query params:
+        const formVersion = req.query.form_version ?? 1
+        const publish = req.query.publish ?? "false"
+>>>>>>> staging
 
         
         // ******************** PREPARE DATA AND SEND TO ODK CENTRAL ******************** //
@@ -291,12 +346,21 @@ router.post("/new", auth, async (req, res, next) => {
         console.log(req.query.project_name)
         console.log(centralResponse.data)
 
+<<<<<<< HEAD
         // const project = await Project.findOne(
         //     { name: req.query.project_name }
         // )
         // if (project.centralID === undefined) {
         //     console.log("could not find centralID of project you are looking for")
         // }
+=======
+        const project = await Project.findOne(
+            { name: req.query.project_name }
+        )
+        if (project.centralID === undefined) {
+            console.log("could not find centralID of project you are looking for")
+        }
+>>>>>>> staging
 
         const formInformation = {
             name: req.query.form_name,
