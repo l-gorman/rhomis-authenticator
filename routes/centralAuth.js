@@ -4,7 +4,7 @@ const axios = require('axios')
 async function getCentralAuthToken() {
     try {
         const central_token = await axios({
-            url: "https://"+process.env.CENTRAL_URL + "/v1/sessions",
+            url: process.env.CENTRAL_URL + "/v1/sessions",
             method: "post",
             data: {
                 email: process.env.CENTRAL_EMAIL,

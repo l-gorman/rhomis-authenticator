@@ -98,9 +98,25 @@ app.use('/api/admin/', adminRoute)
 app.use("/api/user", apiLimiter);
 app.use("/api/email-test", testEmailRoute)
 
+/**
+ *  Add error handling:
+ *   - uses 
+ *   - in test + dev, return the full error stack trace (via the default Express error handler)
+ *   - in prod, return custom error message
+ *  https://expressjs.com/en/guide/error-handling.html#writing-error-handlers
+ */
+app.use((err, req, res, next) => {
+    // must also use default error handler if headers are already sent
+    if (res.headersSent || process.env.NODE_ENV !== 'production') {
+        return next(err)
+    }
+    res.status(err.status ?? 500).send(err.message)
+})
+
 app.get('/', function (req, res) {
     res.send("Welcome to RHoMIS Authenticator")
 })
+ 
 
 app.listen(port, () => console.log('Server up and running on port ' + port))
 

@@ -13,44 +13,44 @@ const updateAdmins = require('./makeAdmin').updateAdmins
 
 let config = require('config'); //we load the db location from the JSON files
 const apiURL = config.get('dataAPI.url')
-
+const { HttpError } = require('../errors/httpError')
 
 const cors = require("cors");
 router.use(cors());
 router.options("*", cors());
 
 const getCentralToken = require('./centralAuth')
+const { param } = require('./auth')
 
-router.post("/publish", auth, async (req, res) => {
+/**
+ * Publishes new 'live' version from the current draft of a form.
+ * @queryParam project_name 
+ * @queryParam form_name
+ */
+router.post("/publish", auth, async (req, res, next) => {
 
-    console.log("finalizing form")
-    // Authenticate on ODK central
-    const token = await getCentralToken()
-
-    console.log(req.query.project_name)
-    console.log(req.query.form_name)
-    if (req.query.project_name === undefined |
-        req.query.form_name === undefined) {
-        return res.status(400).send("Missing information in request")
-    }
-
-    const previous_projects = await Project.findOne({ name: req.query.project_name })
-    console.log("previous projects")
-    console.log(previous_projects)
-    if (!previous_projects) return res.status(400).send("Project does not exist in RHoMIS db")
-
-    const project_ID = previous_projects.centralID
-
-    const previous_forms = await Form.findOne({ name: req.query.form_name })
-    console.log("previous_forms")
-    console.log(previous_forms)
-    if (!previous_forms) return res.status(400).send("Form does not exist in RHoMIS db")
-
+    // wrap whole thing in try/catch. In async, we can pass the error to next() for Express to handle it:
+    // https://expressjs.com/en/guide/error-handling.html#catching-errors
     try {
-        console.log("making central request")
+
+        // ******************** VALIDATE REQUEST ******************** //
+        const validatedReq = validateRequestQuery(req, ['project_name', 'form_name'])
+
+        const project = await Project.findOne({ name: req.query.project_name })
+        if (!project) throw new HttpError("Project does not exist in RHoMIS db", 400)
+
+        const project_ID = project.centralID
+
+        const form = await Form.findOne({ name: req.query.form_name })
+        if (!form) throw new HttpError("Form does not exist in RHoMIS db", 400)
+
+        // ******************** SEND TO ODK CENTRAL ******************** //
+        // Authenticate on ODK central
+        const token = await getCentralToken()
+
         const centralResponse = await axios({
             method: "post",
-            url: "https://"+process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish?version=' + previous_forms.formVersion,
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft/publish?version=' + form.formVersion,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -59,10 +59,9 @@ router.post("/publish", auth, async (req, res) => {
             .catch(function (error) {
                 throw error
             })
-        console.log("centralResponse")
 
-        console.log(centralResponse)
 
+        // ******************** UPDATE RHOMIS DB ******************** //
         const updated_form = await Form.updateOne(
             {
                 name: req.query.form_name,
@@ -73,67 +72,60 @@ router.post("/publish", auth, async (req, res) => {
             }
         )
 
+        console.log(updated_form)
 
         return res.status(200).send("Form finalized")
+
     } catch (err) {
-
-        return res.status(400).send("Unable to finalize form")
-
-
+        next(err)
     }
-    //process.env.CENTRAL_URL +  /v1/projects/projectId/forms/xmlFormId/draft/publish
-
-
 })
 
-router.post("/new-draft", auth, async (req, res) => {
+/**
+ * Creates a new draft from a given XLS file. Request body must be the XLS/XLSX form file as a binary file.
+ * @queryParam project_name
+ * @queryParam form_name
+ * @queryParam form_version (optional - defaults to current form.formVersion + 1)
+ */
+router.post("/new-draft", auth, async (req, res, next) => {
     console.log("user: " + req.user._id)
     console.log("project_name: " + req.query.project_name)
     console.log("form_name: " + req.query.form_name)
-    console.log("publish: " + req.query.publish)
     console.log("form_version: " + req.query.form_version)
     try {
-        if (req.query.project_name === undefined |
-            req.query.form_name === undefined
-            ) {
-            return res.status(400).send("Missing information in request")
-        }
 
-        // Check which project we are looking for
+        // ******************** VALIDATE REQUEST ******************** //
+        //check query has all required params 
+        validateRequestQuery(req, ['project_name','form_name'])
 
-        const previous_projects = await Project.findOne({ name: req.query.project_name })
-        console.log("previous_projects")
-
-        console.log(previous_projects)
-        if (!previous_projects) {
-            return res.status(400).send("Could not the project you are looking for in the RHoMIS db")
-        }
-
+        // Find the project and form
+        const project = await Project.findOne({ name: req.query.project_name })
+        if (!project) throw new HttpError("Could not find project", 400)
+    
         // Check if the authenticated user is actually linked to the project under question
-        console.log(previous_projects.users)
-        console.log(req.user._id)
-
-        if (!previous_projects.users.includes(req.user._id)) return res.status(401).send("Authenticated user does not have permissions to modify this project")
-
-        const project_ID = previous_projects.centralID
+        if (!project.users.includes(req.user._id)) throw new HttpError("Authenticated user does not have permissions to modify this project", 401)
 
         // Check if form exists
-        const previous_forms = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
-        if (!previous_forms) {
-            return res.status(400).send("Form does not exist so cannot update")
-        }
+        const form = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
+        if (!form) throw new HttpError("Cannot find form to update", 400)
 
+        // If form version doesn't exist in query, increment the existing form_version
+        const formVersion = req.query.form_version ?? Number(form.formVersion) + 1
+        
 
+        // ******************** SEND FORM TO ODK CENTRAL ******************** //
         // Authenticate on ODK central
         const token = await getCentralToken()
 
         // Load the xls form data from the request
         const data = await converToBuffer(req, res)
 
+        project_ID = project.centralID
+
         // Send form to ODK central
         const centralResponse = await axios({
             method: "post",
-            url: "https://"+process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft?ignoreWarnings=true',
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/draft?ignoreWarnings=true',
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'X-XlsForm-FormId-Fallback': req.query.form_name,
@@ -142,107 +134,71 @@ router.post("/new-draft", auth, async (req, res) => {
             data: data
         })
             .catch(function (error) {
+                console.log(error)
                 throw error
             })
 
 
 
-
-        // Update forms collection
-        // By default, increment the existing form version by one for each new draft:
-        const formVersion = req.query.form_version ?? Number(previous_forms.formVersion) + 1
-
-
-        const project = await Project.findOne(
-            { name: req.query.project_name }
-        )
-        if (project.centralID === undefined) {
-            console.log("could not find centralID of project you are looking for")
-        }
-
-        let publish = false
-
-        if (req.query.publish === "true") {
-            publish = true
-        }
-
-
-
-
-
+        // ******************** UPDATE RHOMIS DB ******************** //
 
         console.log("saving form")
-        const updated_form = await Form.updateOne(
-            { name: req.query.form_name, project: req.query.project_name },
+        const formUpdate = await Form.updateOne(
+            { 
+                name: req.query.form_name, 
+                project: req.query.project_name 
+            },
             {
                 formVersion: formVersion
             }
         )
 
-        // const formDataApi = await axios({
-        //     url: apiURL + "/api/meta-data/form",
-        //     method: "post",
-        //     data: updated_form,
-        //     headers: {
-        //         'Authorization': req.header('Authorization')
-        //     }
-        // })
-
+        if (formUpdate.nModified !== 1) throw new HttpError("Form is sent to ODK Central, but could not update formVersion in RHoMIS database", 500)
+        
         res.status(200).send("Form successfully updated")
 
     } catch (err) {
-        console.log(err)
-        res.status(400).send(err)
+        next(err)
     }
-
-    return
 })
 
 
+/**
+ * Creates an entirely new form from a given XLS file. The request body must be the XLS/XLSX form file as a binary file.
+ * @queryParam project_name
+ * @queryParam form_name (must be unique within the project, and must match the form_id inside the given XLS file)
+ * @queryParam publish (optional - defaults to FALSE)
+ * @queryParam form_vesrion (optional - defaults to 1)
+ */
+router.post("/new", auth, async (req, res, next) => {
 
-router.post("/new", auth, async (req, res) => {
-    // write file then read it
-    //const writeStatus = await writeToFile(req, res)
-    //const data = await readFile("./survey_modules/node_output.xlsx")
     console.log("user: " + req.user._id)
     console.log("project_name: " + req.query.project_name)
     console.log("form_name: " + req.query.form_name)
     console.log("publish: " + req.query.publish)
     console.log("form_version: " + req.query.form_version)
     try {
-        if (req.query.project_name === undefined |
-            req.query.form_name === undefined) {
-            return res.status(400).send("Missing information in request")
-        }
+            
+        // throw new HttpError('test')
+        // ******************** VALIDATE REQUEST ******************** //
+        validateRequestQuery(req, ['project_name', 'form_name'])
 
         // Check which project we are looking for
+        const project = await Project.findOne({ name: req.query.project_name })
+        if (!project) throw new HttpError("Could not find project with this name", 400)
+        
+        if (!project.users.includes(req.user._id)) throw new HttpError("Authenticated user does not have permissions to modify this project", 401)
 
-        const previous_projects = await Project.findOne({ name: req.query.project_name })
-        console.log("previous_projects")
-
-        console.log(previous_projects)
-        if (!previous_projects) {
-            return res.status(400).send("Could not the project you are looking for in the RHoMIS db")
-        }
-
-        // Check if the authenticated user is actually linked to the project under question
-        console.log(previous_projects.users)
-        console.log(req.user._id)
-
-        if (!previous_projects.users.includes(req.user._id)) return res.status(400).send("Authenticated user does not have permissions to modify this project")
-
-        const project_ID = previous_projects.centralID
 
         // Check if form exists
-        const previous_forms = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
-        if (previous_forms) {
-            res.status(400).send("There is already a form with this name in the database")
-        }
+        const form = await Form.findOne({ name: req.query.form_name, project: req.query.project_name })
+        if (form) throw new HttpError("There is already a form with this name in the database", 400)
 
-        // Set defaults for optional query params:
-        const formVersion = req.query.form_version ?? 1
-        const publish = req.query.publish ?? "false"
-
+        
+        // ******************** PREPARE DATA AND SEND TO ODK CENTRAL ******************** //
+        const project_ID = project.centralID
+        const publish = req.query.publish ?? 'false'
+        const formVersion = req.query.formVersion ?? 1
         // Authenticate on ODK central
         const token = await getCentralToken()
 
@@ -252,7 +208,7 @@ router.post("/new", auth, async (req, res) => {
         // Send form to ODK central
         const centralResponse = await axios({
             method: "post",
-            url: "https://"+process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms?ignoreWarnings=true&publish=' + req.query.publish,
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms?ignoreWarnings=true&publish=' + publish,
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'X-XlsForm-FormId-Fallback': req.query.form_name,
@@ -265,13 +221,13 @@ router.post("/new", auth, async (req, res) => {
             })
 
 
-        // Add an app user and assign to project
+        // *****************  Add an app user and assign to project *****************
         // https://private-709900-odkcentral.apiary-mock.com/v1/projects/projectId/app-users
 
         const appUserName = "data-collector-" + req.query.form_name
         const appUserCreation = await axios({
             method: "post",
-            url: "https://"+process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/app-users',
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/app-users',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -288,7 +244,7 @@ router.post("/new", auth, async (req, res) => {
         const formID = req.query.form_name
         const appRoleAssignment = await axios({
             method: "post",
-            url: "https://"+process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/assignments/' + roleID + '/' + appUserCreation.data.id,
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + '/assignments/' + roleID + '/' + appUserCreation.data.id,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -300,7 +256,7 @@ router.post("/new", auth, async (req, res) => {
 
         const draftDetails = await axios({
             method: "get",
-            url: "https://"+process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + "/draft",
+            url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms/' + req.query.form_name + "/draft",
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
@@ -311,6 +267,7 @@ router.post("/new", auth, async (req, res) => {
             })
 
 
+        // ******************** UPDATE RHOMIS DB ******************** //
 
         // Add form to projects collection
         const updated_project = await Project.updateOne(
@@ -333,12 +290,12 @@ router.post("/new", auth, async (req, res) => {
         console.log(req.query.project_name)
         console.log(centralResponse.data)
 
-        const project = await Project.findOne(
-            { name: req.query.project_name }
-        )
-        if (project.centralID === undefined) {
-            console.log("could not find centralID of project you are looking for")
-        }
+        // const project = await Project.findOne(
+        //     { name: req.query.project_name }
+        // )
+        // if (project.centralID === undefined) {
+        //     console.log("could not find centralID of project you are looking for")
+        // }
 
         const formInformation = {
             name: req.query.form_name,
@@ -350,7 +307,7 @@ router.post("/new", auth, async (req, res) => {
             complete: false,
             collectionDetails: {
                 general: {
-                    server_url: "https://"+process.env.CENTRAL_URL + "/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID,
+                    server_url: process.env.CENTRAL_URL + "/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID,
                     form_update_mode: "match_exactly",
                     autosend: "wifi_and_cellular"
                 },
@@ -358,7 +315,7 @@ router.post("/new", auth, async (req, res) => {
             },
             draftCollectionDetails: {
                 general: {
-                    server_url: "https://"+process.env.CENTRAL_URL + "/v1/test/" + draftDetails.data.draftToken + "/projects/" + project.centralID + "/forms/" + req.query.form_name + "/draft",
+                    server_url: process.env.CENTRAL_URL + "/v1/test/" + draftDetails.data.draftToken + "/projects/" + project.centralID + "/forms/" + req.query.form_name + "/draft",
                     form_update_mode: "match_exactly",
                     autosend: "wifi_and_cellular"
                 },
@@ -393,7 +350,7 @@ router.post("/new", auth, async (req, res) => {
 
     } catch (err) {
         console.log(err)
-        res.status(400).send(err)
+        next(err)
     }
 
     return
@@ -451,6 +408,18 @@ async function writeToFile(req, res) {
 async function readFile(path) {
     const data = fs.readFileSync(path)
     return data
+}
+
+// Check that req.query includes all of the given query parameters
+async function validateRequestQuery(req, query_params) {    
+    missing = []
+    query_params.forEach(item => {
+        if (req.query[item] === undefined) missing.push(item)
+    });
+
+    if (missing.length > 0) throw new HttpError("Request query must include the following: " + missing.join(','), 400)
+
+    return req
 }
 
 module.exports = router;
