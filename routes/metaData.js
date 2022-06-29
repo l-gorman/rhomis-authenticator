@@ -34,15 +34,23 @@ router.post("/", auth, async (req, res) => {
         console.log("get submission count")
         console.log(req.body)
         if (req.body.getSubmissionCount === true) {
-
+            if (req.body.projectName)
+            {
             for (let form_index = 0; form_index < forms.length; form_index++) {
 
-                forms[form_index].submissions = await getSubmissionCounts({
-                    projectName: forms[form_index].project,
-                    formName: forms[form_index].name,
-                })
+                let projectName = forms[form_index].project
+                console.log(projectName)
+                if (projectName===req.body.projectName)
+                {
+
+                    forms[form_index].submissions = await getSubmissionCounts({
+                        projectName: forms[form_index].project,
+                        formName: forms[form_index].name
+                    })
+                }
 
             }
+        }
         }
 
 
@@ -101,11 +109,11 @@ function BuildSubmissionURL(props) {
 
 
     if (props.form.draft === false) {
-        return "https://" + process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/submissions'
+        return  process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/submissions'
     }
 
     if (props.form.draft = true) {
-        return "https://" + process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/draft/submissions'
+        return process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/draft/submissions'
     }
 }
 
