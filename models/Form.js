@@ -46,6 +46,9 @@ const formSchema = new mongoose.Schema({
     complete: {
         type: Boolean,
     },
+    live: {
+        type: Boolean,
+    }, 
     createdAt: {
         type: Date,
         default: Date.now
