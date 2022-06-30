@@ -69,6 +69,7 @@ router.post("/publish", auth, async (req, res, next) => {
             },
             {
                 draft: false,
+                live: true
             }
         )
 
@@ -173,6 +174,7 @@ router.post("/new-draft", auth, async (req, res, next) => {
 router.post("/new", auth, async (req, res, next) => {
 
     console.log("user: " + req.user._id)
+
     console.log("project_name: " + req.query.project_name)
     console.log("form_name: " + req.query.form_name)
     console.log("publish: " + req.query.publish)
