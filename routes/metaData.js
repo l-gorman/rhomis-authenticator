@@ -108,7 +108,7 @@ async function getSubmissionCounts(props) {
 function BuildSubmissionURL(props) {
 
 
-    if (props.form.draft === false) {
+    if (props.form.live === true) {
         return  process.env.CENTRAL_URL + '/v1/projects/' + props.project.centralID + '/forms/' + props.form.centralID + '/submissions'
     }
 
