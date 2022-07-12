@@ -111,6 +111,8 @@ router.post("/new-draft", auth, async (req, res, next) => {
         if (!project.users.includes(req.user._id)) throw new HttpError("Authenticated user does not have permissions to modify this project", 401)
 
         // Check if form exists
+
+
         const form = await Form.findOne({ name: req.query.form_name, project: req.query.project_name})
         if (!form) throw new HttpError("Cannot find form to update", 400)
 
@@ -119,25 +121,36 @@ router.post("/new-draft", auth, async (req, res, next) => {
         // exists, and where both exist.
         let formVersion = null
 
+       
         if (req.query.form_version){
-
             formVersion = req.query.form_version
 
         } else if (form.draft==true){   
+            if (isNaN(Number(form.draftVersion))){
+                formVersion = 1
+            }else{
+                formVersion === Number(form.draftVersion) + 1
+            }
 
-            formVersion === Number(form.draftVersion) + 1
 
         }
 
         else if (form.live==true){
-            formVersion === Number(form.liveVersion) + 1
+            if (isNaN(Number(form.liveVersion))){
+                formVersion = 1
+            }else{
+                formVersion === Number(form.liveVersion) + 1
+            }
 
         }else {
             throw new HttpError("Could not find a version to assign to this form", 500)
         }
-
- 
         
+
+        // console.log("formVersion")
+
+        // console.log(formVersion)
+        // return res.send("debugging")
 
         // ******************** SEND FORM TO ODK CENTRAL ******************** //
         // Authenticate on ODK central
@@ -229,17 +242,24 @@ router.post("/new", auth, async (req, res, next) => {
         let formVersion = null
 
         if (req.query.form_version){
-
             formVersion = req.query.form_version
 
         } else if (form.draft==true){   
+            if (isNaN(Number(form.draftVersion))){
+                formVersion = 1
+            }else{
+                formVersion === Number(form.draftVersion) + 1
+            }
 
-            formVersion === Number(form.draftVersion) + 1
 
         }
 
         else if (form.live==true){
-            formVersion === Number(form.liveVersion) + 1
+            if (isNaN(Number(form.liveVersion))){
+                formVersion = 1
+            }else{
+                formVersion === Number(form.liveVersion) + 1
+            }
 
         }else {
             throw new HttpError("Could not find a version to assign to this form", 500)
@@ -354,7 +374,7 @@ router.post("/new", auth, async (req, res, next) => {
             complete: false,
             collectionDetails: {
                 general: {
-                    server_url: process.env.CENTRAL_URL + "/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID,
+                    server_url: process.env.CENTRAL_URL + "/v1/key/" + appUserCreation.data.token + "/projects/" + project.centralID + "/forms/" + req.query.form_name,
                     form_update_mode: "match_exactly",
                     autosend: "wifi_and_cellular"
                 },
