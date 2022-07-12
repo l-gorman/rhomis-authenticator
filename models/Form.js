@@ -40,6 +40,15 @@ const formSchema = new mongoose.Schema({
     formVersion: {
         type: String,
     },
+    draftVersion: {
+        type: String,
+        default: null
+    },
+    liveVersion: {
+        type: String,
+        default: null
+
+    },
     draft: {
         type: Boolean,
     },
