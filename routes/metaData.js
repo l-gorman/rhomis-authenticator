@@ -87,8 +87,8 @@ async function getSubmissionCounts(props) {
     const token = await getCentralAuthToken()
 
     let submissions = {
-        live:0,
-        draft:0
+        live:null,
+        draft:null
     }
 
     if (form.draft==true){

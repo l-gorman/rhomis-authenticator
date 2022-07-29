@@ -216,7 +216,6 @@ router.post("/new", auth, async (req, res, next) => {
 
     console.log("project_name: " + req.query.project_name)
     console.log("form_name: " + req.query.form_name)
-    console.log("publish: " + req.query.publish)
     console.log("form_version: " + req.query.form_version)
     try {
             
@@ -274,7 +273,6 @@ router.post("/new", auth, async (req, res, next) => {
         const centralResponse = await axios({
             method: "post",
             url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms?ignoreWarnings=true',
-            // url: process.env.CENTRAL_URL + '/v1/projects/' + project_ID + '/forms?ignoreWarnings=true&publish=' + publish,
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'X-XlsForm-FormId-Fallback': req.query.form_name,
@@ -369,8 +367,8 @@ router.post("/new", auth, async (req, res, next) => {
             draftVersion: formVersion,
             users: [req.user._id],
             centralID: centralResponse.data.xmlFormId,
-            draft: !publish,
-            live: publish,
+            draft: true,
+            live: false,
             complete: false,
             collectionDetails: {
                 general: {
